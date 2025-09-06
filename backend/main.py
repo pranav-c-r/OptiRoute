@@ -1,0 +1,45 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
+from hospital_allocation.routes import router as hospital_router
+
+# Dynamically import waste-optimizer.routes as waste_optimizer_router
+import sys
+import importlib.util
+import os
+waste_optimizer_path = os.path.join(os.path.dirname(__file__), 'waste-optimizer')
+if waste_optimizer_path not in sys.path:
+    sys.path.insert(0, waste_optimizer_path)
+spec = importlib.util.spec_from_file_location("waste_optimizer.routes", os.path.join(waste_optimizer_path, "routes.py"))
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+waste_optimizer_router = module.router
+
+# Create the main FastAPI application instance
+app = FastAPI(
+    title="Food & Supply Chain Optimizer API",
+    description="API for optimizing food distribution and reducing waste.",
+    version="1.0.0"
+)
+
+# CORS setup for frontend access
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], 
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include the hospital allocation router with a clear prefix
+app.include_router(hospital_router, prefix="/hospital", tags=["HospitalAllocation"])
+
+# Include the new waste optimizer router
+app.include_router(waste_optimizer_router, prefix="/waste-optimizer", tags=["WasteOptimizer"])
+
+@app.get("/")
+def root():
+    return {"message": "Food & Supply Chain Optimizer API is running successfully"}
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)

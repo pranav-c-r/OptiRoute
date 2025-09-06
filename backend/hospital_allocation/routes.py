@@ -9,6 +9,7 @@ import random
 from huggingface_hub import hf_hub_download
 from typing import List, Dict, Any
 from datetime import datetime, timedelta
+from enum import Enum
 
 # Create an API Router for this module
 router = APIRouter()
@@ -43,6 +44,109 @@ class HospitalUpdateInput(BaseModel):
     available_beds: int
     available_icu_beds: int
     current_occupancy: int
+
+# Role-specific data models
+class DoctorProfileInput(BaseModel):
+    hospital_name: str
+    specialization: str
+    experience_years: int
+    contact_info: str = ""
+    certifications: List[str] = []
+    emergency_contact: str = ""
+
+class AmbulanceDriverInput(BaseModel):
+    license_number: str
+    vehicle_id: str
+    current_location_lat: float
+    current_location_lon: float
+    availability_status: str = "available"  # available, busy, off-duty
+    case_severity: int = 1  # 1-5 scale
+    estimated_arrival: str = ""
+    patient_count: int = 0
+
+class HospitalAdminProfileInput(BaseModel):
+    hospital_name: str
+    total_beds: int
+    icu_beds: int
+    available_beds: int
+    available_icu_beds: int
+    doctors_count: int
+    specialties_available: List[str] = []
+    emergency_capacity: int
+    contact_info: str
+
+class FarmerInput(BaseModel):
+    farm_name: str
+    location_lat: float
+    location_lon: float
+    crops_available: List[Dict[str, Any]]  # [{'crop_name': str, 'quantity': int, 'price_per_kg': float, 'harvest_date': str}]
+    contact_info: str
+    organic_certified: bool = False
+    delivery_radius_km: float = 10.0
+
+class LogisticsDriverInput(BaseModel):
+    driver_name: str
+    vehicle_type: str  # truck, van, motorcycle
+    vehicle_capacity_kg: float
+    license_number: str
+    current_location_lat: float
+    current_location_lon: float
+    availability_status: str = "available"
+    delivery_radius_km: float = 50.0
+    contact_info: str
+
+class NGOInput(BaseModel):
+    organization_name: str
+    registration_number: str
+    focus_areas: List[str]  # disaster_relief, hunger, education, etc
+    location_lat: float
+    location_lon: float
+    resources_available: List[Dict[str, Any]]
+    volunteer_count: int
+    contact_info: str
+    operating_hours: List[str] = []
+
+class ShelterManagerInput(BaseModel):
+    shelter_name: str
+    location_lat: float
+    location_lon: float
+    total_capacity: int
+    available_capacity: int
+    shelter_type: str  # emergency, temporary, permanent
+    facilities_available: List[str]  # food, medical, education, etc
+    contact_info: str
+    operating_since: str
+
+class WarehouseManagerInput(BaseModel):
+    warehouse_name: str
+    location_lat: float
+    location_lon: float
+    total_capacity_cubic_meters: float
+    available_capacity_cubic_meters: float
+    storage_types: List[str]  # dry, cold, frozen, hazardous
+    inventory_items: List[Dict[str, Any]]
+    contact_info: str
+
+class HousingAuthorityInput(BaseModel):
+    authority_name: str
+    jurisdiction_area: str
+    available_properties: List[Dict[str, Any]]  # [{'property_type': str, 'count': int, 'rent_range': str}]
+    application_process: str
+    contact_info: str
+    eligibility_criteria: str
+
+class LandlordInput(BaseModel):
+    landlord_name: str
+    properties_available: List[Dict[str, Any]]  # [{'address': str, 'type': str, 'rent': float, 'bedrooms': int}]
+    preferred_tenant_type: str
+    contact_info: str
+    lease_terms: str
+    pet_policy: str
+
+class UserProfileUpdate(BaseModel):
+    user_id: str
+    role: str
+    profile_data: Dict[str, Any]
 
 # --- Load all necessary data and models from your Model Hub repository ---
 # This will run only once when the server starts
@@ -339,3 +443,225 @@ def get_specialty_distribution():
         "specialties": list(specialty_count.keys()),
         "counts": list(specialty_count.values())
     }
+
+# --- Role-specific profile management ---
+user_profiles_db = {}  # Store role-specific user profiles
+
+@router.post("/profiles/update")
+def update_user_profile(profile_update: UserProfileUpdate):
+    """Update user profile with role-specific data"""
+    user_profiles_db[profile_update.user_id] = {
+        "user_id": profile_update.user_id,
+        "role": profile_update.role,
+        "profile_data": profile_update.profile_data,
+        "created_at": datetime.now().isoformat(),
+        "last_updated": datetime.now().isoformat()
+    }
+    return {"message": "Profile updated successfully", "user_id": profile_update.user_id}
+
+@router.get("/profiles/{user_id}")
+def get_user_profile(user_id: str):
+    """Get user profile by ID"""
+    if user_id not in user_profiles_db:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    return user_profiles_db[user_id]
+
+@router.get("/profiles/role/{role}")
+def get_profiles_by_role(role: str):
+    """Get all profiles by role"""
+    role_profiles = [profile for profile in user_profiles_db.values() if profile["role"] == role]
+    return {"profiles": role_profiles}
+
+# Role-specific endpoints
+@router.post("/ambulance/update-status")
+def update_ambulance_status(driver_data: AmbulanceDriverInput):
+    """Update ambulance driver status and current case"""
+    # This could be integrated with the user profile system
+    return {"message": "Ambulance status updated", "data": driver_data.dict()}
+
+@router.post("/farmer/update-crops")
+def update_farmer_crops(farmer_data: FarmerInput):
+    """Update farmer's available crops and pricing"""
+    return {"message": "Farmer crops updated", "data": farmer_data.dict()}
+
+@router.get("/farmer/nearby")
+def get_nearby_farmers(lat: float, lon: float, radius_km: float = 10.0):
+    """Get farmers within specified radius"""
+    nearby_farmers = []
+    for profile in user_profiles_db.values():
+        if profile["role"] == "farmer":
+            farmer_data = profile["profile_data"]
+            if "location_lat" in farmer_data and "location_lon" in farmer_data:
+                distance = haversine(lon, lat, farmer_data["location_lon"], farmer_data["location_lat"])
+                if distance <= radius_km:
+                    nearby_farmers.append({
+                        **profile,
+                        "distance_km": round(distance, 2)
+                    })
+    
+    return {"farmers": sorted(nearby_farmers, key=lambda x: x["distance_km"])}
+
+@router.post("/logistics/update-availability")
+def update_logistics_availability(logistics_data: LogisticsDriverInput):
+    """Update logistics driver availability and location"""
+    return {"message": "Logistics availability updated", "data": logistics_data.dict()}
+
+@router.get("/logistics/nearby")
+def get_nearby_logistics_drivers(lat: float, lon: float, radius_km: float = 50.0):
+    """Get available logistics drivers within specified radius"""
+    nearby_drivers = []
+    for profile in user_profiles_db.values():
+        if profile["role"] == "logistics_driver":
+            driver_data = profile["profile_data"]
+            if ("current_location_lat" in driver_data and 
+                "current_location_lon" in driver_data and
+                driver_data.get("availability_status") == "available"):
+                distance = haversine(lon, lat, driver_data["current_location_lon"], driver_data["current_location_lat"])
+                if distance <= radius_km:
+                    nearby_drivers.append({
+                        **profile,
+                        "distance_km": round(distance, 2)
+                    })
+    
+    return {"drivers": sorted(nearby_drivers, key=lambda x: x["distance_km"])}
+
+@router.post("/shelter/update-capacity")
+def update_shelter_capacity(shelter_data: ShelterManagerInput):
+    """Update shelter capacity and facilities"""
+    return {"message": "Shelter capacity updated", "data": shelter_data.dict()}
+
+@router.get("/shelter/available")
+def get_available_shelters(lat: float = None, lon: float = None, radius_km: float = 25.0):
+    """Get available shelters, optionally filtered by location"""
+    available_shelters = []
+    for profile in user_profiles_db.values():
+        if profile["role"] == "shelter_manager":
+            shelter_data = profile["profile_data"]
+            if shelter_data.get("available_capacity", 0) > 0:
+                shelter_info = {**profile}
+                if lat and lon and "location_lat" in shelter_data and "location_lon" in shelter_data:
+                    distance = haversine(lon, lat, shelter_data["location_lon"], shelter_data["location_lat"])
+                    if distance <= radius_km:
+                        shelter_info["distance_km"] = round(distance, 2)
+                        available_shelters.append(shelter_info)
+                else:
+                    available_shelters.append(shelter_info)
+    
+    if lat and lon:
+        available_shelters = sorted(available_shelters, key=lambda x: x.get("distance_km", float('inf')))
+    
+    return {"shelters": available_shelters}
+
+@router.post("/warehouse/update-inventory")
+def update_warehouse_inventory(warehouse_data: WarehouseManagerInput):
+    """Update warehouse inventory and capacity"""
+    return {"message": "Warehouse inventory updated", "data": warehouse_data.dict()}
+
+@router.get("/warehouse/search-inventory")
+def search_warehouse_inventory(item_name: str = None, lat: float = None, lon: float = None, radius_km: float = 50.0):
+    """Search for specific items in warehouses"""
+    matching_warehouses = []
+    for profile in user_profiles_db.values():
+        if profile["role"] == "warehouse_manager":
+            warehouse_data = profile["profile_data"]
+            # Check if item is in inventory
+            if item_name:
+                inventory_items = warehouse_data.get("inventory_items", [])
+                has_item = any(item_name.lower() in item.get("name", "").lower() for item in inventory_items)
+                if not has_item:
+                    continue
+            
+            warehouse_info = {**profile}
+            if lat and lon and "location_lat" in warehouse_data and "location_lon" in warehouse_data:
+                distance = haversine(lon, lat, warehouse_data["location_lon"], warehouse_data["location_lat"])
+                if distance <= radius_km:
+                    warehouse_info["distance_km"] = round(distance, 2)
+                    matching_warehouses.append(warehouse_info)
+            else:
+                matching_warehouses.append(warehouse_info)
+    
+    if lat and lon:
+        matching_warehouses = sorted(matching_warehouses, key=lambda x: x.get("distance_km", float('inf')))
+    
+    return {"warehouses": matching_warehouses}
+
+@router.post("/housing-authority/update-properties")
+def update_housing_authority_properties(housing_data: HousingAuthorityInput):
+    """Update available properties from housing authority"""
+    return {"message": "Housing authority properties updated", "data": housing_data.dict()}
+
+@router.get("/housing-authority/properties")
+def get_available_properties(property_type: str = None, max_rent: float = None):
+    """Get available properties from housing authorities"""
+    available_properties = []
+    for profile in user_profiles_db.values():
+        if profile["role"] == "housing_authority":
+            housing_data = profile["profile_data"]
+            properties = housing_data.get("available_properties", [])
+            
+            for prop in properties:
+                if property_type and prop.get("property_type") != property_type:
+                    continue
+                if max_rent and prop.get("rent", float('inf')) > max_rent:
+                    continue
+                
+                available_properties.append({
+                    **prop,
+                    "authority_name": housing_data.get("authority_name"),
+                    "contact_info": housing_data.get("contact_info")
+                })
+    
+    return {"properties": available_properties}
+
+@router.post("/landlord/update-properties")
+def update_landlord_properties(landlord_data: LandlordInput):
+    """Update landlord's available properties"""
+    return {"message": "Landlord properties updated", "data": landlord_data.dict()}
+
+@router.get("/landlord/properties")
+def get_landlord_properties(max_rent: float = None, min_bedrooms: int = None, pet_friendly: bool = None):
+    """Get available properties from landlords"""
+    available_properties = []
+    for profile in user_profiles_db.values():
+        if profile["role"] == "landlord":
+            landlord_data = profile["profile_data"]
+            properties = landlord_data.get("properties_available", [])
+            
+            for prop in properties:
+                if max_rent and prop.get("rent", float('inf')) > max_rent:
+                    continue
+                if min_bedrooms and prop.get("bedrooms", 0) < min_bedrooms:
+                    continue
+                if pet_friendly is not None:
+                    pet_policy = landlord_data.get("pet_policy", "").lower()
+                    if pet_friendly and "no pets" in pet_policy:
+                        continue
+                    if not pet_friendly and "pets allowed" not in pet_policy:
+                        continue
+                
+                available_properties.append({
+                    **prop,
+                    "landlord_name": landlord_data.get("landlord_name"),
+                    "contact_info": landlord_data.get("contact_info"),
+                    "pet_policy": landlord_data.get("pet_policy")
+                })
+    
+    return {"properties": available_properties}
+
+@router.post("/ngo/update-resources")
+def update_ngo_resources(ngo_data: NGOInput):
+    """Update NGO resources and volunteer information"""
+    return {"message": "NGO resources updated", "data": ngo_data.dict()}
+
+@router.get("/ngo/by-focus-area/{focus_area}")
+def get_ngos_by_focus_area(focus_area: str):
+    """Get NGOs working in a specific focus area"""
+    matching_ngos = []
+    for profile in user_profiles_db.values():
+        if profile["role"] == "ngo":
+            ngo_data = profile["profile_data"]
+            focus_areas = ngo_data.get("focus_areas", [])
+            if focus_area.lower() in [area.lower() for area in focus_areas]:
+                matching_ngos.append(profile)
+    
+    return {"ngos": matching_ngos}

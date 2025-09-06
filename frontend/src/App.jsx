@@ -54,7 +54,7 @@ function App() {
             } />
             
             <Route path="/hospital-optimizer" element={
-              <ProtectedRoute allowedRoles={["hospital_admin", "doctor", "ambulance_driver"]}>
+              <ProtectedRoute>
                 <Layout>
                   <HospitalResourceOptimizer />
                 </Layout>
@@ -62,7 +62,7 @@ function App() {
             } />
             
             <Route path="/disaster-relief" element={
-              <ProtectedRoute allowedRoles={["logistics_driver", "ngo"]}>
+              <ProtectedRoute>
                 <Layout>
                   <DisasterReliefOptimizer />
                 </Layout>
@@ -70,7 +70,7 @@ function App() {
             } />
             
             <Route path="/hunger-waste" element={
-              <ProtectedRoute allowedRoles={["farmer", "logistics_driver", "ngo", "warehouse_manager"]}>
+              <ProtectedRoute>
                 <Layout>
                   <HungerWasteOptimizer />
                 </Layout>
@@ -78,7 +78,7 @@ function App() {
             } />
             
             <Route path="/shelter-allocation" element={
-              <ProtectedRoute allowedRoles={["ngo", "landlord", "shelter_manager", "housing_authority"]}>
+              <ProtectedRoute>
                 <Layout>
                   <SmartShelterAllocation />
                 </Layout>

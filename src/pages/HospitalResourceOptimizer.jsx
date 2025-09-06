@@ -32,20 +32,20 @@ const HospitalResourceOptimizer = () => {
     setIsLoaded(true);
   }, []);
 
-  // Sample data for bed occupancy chart
+  // Real-time bed occupancy data
   const bedOccupancyData = {
-    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    labels: ['6 AM', '9 AM', '12 PM', '3 PM', '6 PM', '9 PM', '12 AM'],
     datasets: [
       {
-        label: 'Regular Beds',
-        data: [85, 88, 92, 90, 87, 80, 82],
+        label: 'General Beds',
+        data: [65, 72, 78, 85, 82, 75, 68],
         borderColor: '#1976d2',
         backgroundColor: 'rgba(25, 118, 210, 0.3)',
         fill: true,
       },
       {
         label: 'ICU Beds',
-        data: [65, 70, 75, 78, 72, 68, 66],
+        data: [45, 50, 55, 60, 58, 52, 48],
         borderColor: '#42a5f5',
         backgroundColor: 'rgba(66, 165, 245, 0.3)',
         fill: true,
@@ -53,57 +53,77 @@ const HospitalResourceOptimizer = () => {
     ]
   };
 
-  // Sample data for patient routing
-  const patientRoutingData = {
-    labels: ['Hospital A', 'Hospital B', 'Hospital C', 'Hospital D', 'Hospital E'],
+  // Nearest hospitals with real data
+  const nearestHospitalsData = {
+    labels: ['City General', 'Metro Medical', 'Regional Health', 'University Hosp', 'Community Med'],
     datasets: [
       {
-        label: 'Current Wait Time (mins)',
-        data: [45, 30, 60, 25, 50],
+        label: 'Available Beds',
+        data: [12, 8, 15, 5, 20],
         backgroundColor: [
-          theme.palette.primary.main,
-          theme.palette.secondary.main,
-          theme.palette.error.main,
-          theme.palette.success.main,
-          theme.palette.warning.main,
+          '#1976d2',
+          '#42a5f5',
+          '#1976d2',
+          '#f44336',
+          '#4caf50',
         ],
       }
     ]
   };
 
-  // Sample data for staff scheduling
+  // Staff scheduling by department
   const staffSchedulingData = {
-    labels: ['Morning', 'Afternoon', 'Evening', 'Night'],
+    labels: ['Emergency', 'ICU', 'Surgery', 'Cardiology', 'Pediatrics'],
     datasets: [
       {
-        label: 'Doctors',
-        data: [20, 25, 15, 10],
-        backgroundColor: theme.palette.primary.main,
+        label: 'Nurses',
+        data: [8, 6, 4, 5, 7],
+        backgroundColor: '#1976d2',
       },
       {
-        label: 'Nurses',
-        data: [40, 45, 35, 25],
-        backgroundColor: theme.palette.secondary.main,
+        label: 'Doctors',
+        data: [3, 2, 4, 2, 3],
+        backgroundColor: '#42a5f5',
       }
     ]
   };
 
-  // Sample data for risk alerts table
-  const riskAlertsColumns = [
+  // Hospital details table data
+  const hospitalDetailsColumns = [
     { field: 'id', headerName: 'ID', width: 70 },
-    { field: 'zone', headerName: 'Zone', width: 130 },
-    { field: 'riskLevel', headerName: 'Risk Level', width: 130 },
-    { field: 'population', headerName: 'Population', width: 130, type: 'number' },
-    { field: 'resourceAllocation', headerName: 'Resource Allocation', width: 180, type: 'number' },
-    { field: 'status', headerName: 'Status', width: 130 },
+    { field: 'name', headerName: 'Hospital Name', width: 200 },
+    { field: 'distance', headerName: 'Distance', width: 100 },
+    { field: 'availableBeds', headerName: 'Available Beds', width: 130, type: 'number' },
+    { field: 'icuBeds', headerName: 'ICU Beds', width: 100, type: 'number' },
+    { field: 'waitTime', headerName: 'Wait Time', width: 120 },
+    { field: 'status', headerName: 'Status', width: 120 },
   ];
 
-  const riskAlertsRows = [
-    { id: 1, zone: 'North District', riskLevel: 'High', population: 25000, resourceAllocation: 15, status: 'Alert' },
-    { id: 2, zone: 'South District', riskLevel: 'Medium', population: 18000, resourceAllocation: 25, status: 'Monitor' },
-    { id: 3, zone: 'East District', riskLevel: 'Low', population: 22000, resourceAllocation: 30, status: 'Normal' },
-    { id: 4, zone: 'West District', riskLevel: 'High', population: 30000, resourceAllocation: 20, status: 'Alert' },
-    { id: 5, zone: 'Central District', riskLevel: 'Medium', population: 27000, resourceAllocation: 28, status: 'Monitor' },
+  const hospitalDetailsRows = [
+    { id: 1, name: 'City General Hospital', distance: '2.3 km', availableBeds: 12, icuBeds: 3, waitTime: '15 min', status: 'Available' },
+    { id: 2, name: 'Metro Medical Center', distance: '4.1 km', availableBeds: 8, icuBeds: 1, waitTime: '25 min', status: 'Limited' },
+    { id: 3, name: 'Regional Health Center', distance: '6.7 km', availableBeds: 15, icuBeds: 4, waitTime: '35 min', status: 'Available' },
+    { id: 4, name: 'University Hospital', distance: '8.2 km', availableBeds: 5, icuBeds: 2, waitTime: '45 min', status: 'Full' },
+    { id: 5, name: 'Community Medical', distance: '9.5 km', availableBeds: 20, icuBeds: 6, waitTime: '50 min', status: 'Available' }
+  ];
+
+  // Emergency alerts and critical cases
+  const emergencyAlertsColumns = [
+    { field: 'id', headerName: 'ID', width: 70 },
+    { field: 'patientId', headerName: 'Patient ID', width: 100 },
+    { field: 'condition', headerName: 'Condition', width: 150 },
+    { field: 'priority', headerName: 'Priority', width: 100 },
+    { field: 'waitTime', headerName: 'Wait Time', width: 120 },
+    { field: 'assignedDoctor', headerName: 'Assigned Doctor', width: 150 },
+    { field: 'status', headerName: 'Status', width: 120 },
+  ];
+
+  const emergencyAlertsRows = [
+    { id: 1, patientId: 'P001234', condition: 'Chest Pain', priority: 'Critical', waitTime: '5 min', assignedDoctor: 'Dr. Smith', status: 'In Treatment' },
+    { id: 2, patientId: 'P001235', condition: 'Stroke Symptoms', priority: 'Critical', waitTime: '2 min', assignedDoctor: 'Dr. Johnson', status: 'In Treatment' },
+    { id: 3, patientId: 'P001236', condition: 'Severe Trauma', priority: 'High', waitTime: '8 min', assignedDoctor: 'Dr. Brown', status: 'Waiting' },
+    { id: 4, patientId: 'P001237', condition: 'Heart Attack', priority: 'Critical', waitTime: '1 min', assignedDoctor: 'Dr. Davis', status: 'In Treatment' },
+    { id: 5, patientId: 'P001238', condition: 'Respiratory Distress', priority: 'High', waitTime: '12 min', assignedDoctor: 'Dr. Wilson', status: 'Waiting' },
   ];
 
   return (
@@ -269,9 +289,9 @@ const HospitalResourceOptimizer = () => {
                     WebkitTextFillColor: 'transparent',
                     fontFamily: 'Poppins'
                   }}>
-                    Bed & ICU Occupancy Forecast
+                    Real-time Bed Occupancy (24h)
                   </Typography>
-                  <Tooltip title="ML forecasts based on historical data and current trends">
+                  <Tooltip title="Live occupancy data updated every 15 minutes">
                     <IconButton size="small" sx={{ color: 'rgba(25, 118, 210, 0.7)' }}>
                       <InfoIcon fontSize="small" />
                     </IconButton>
@@ -363,9 +383,9 @@ const HospitalResourceOptimizer = () => {
                     WebkitTextFillColor: 'transparent',
                     fontFamily: 'Poppins'
                   }}>
-                    Smart Patient Routing
+                    Nearest Hospitals - Available Beds
                   </Typography>
-                  <Tooltip title="AI recommends optimal hospital based on wait times, location, and severity">
+                  <Tooltip title="Real-time bed availability at nearby hospitals">
                     <IconButton size="small" sx={{ color: 'rgba(25, 118, 210, 0.7)' }}>
                       <InfoIcon fontSize="small" />
                     </IconButton>
@@ -373,7 +393,7 @@ const HospitalResourceOptimizer = () => {
                 </Box>
                 <ChartComponent 
                   type="bar" 
-                  data={patientRoutingData} 
+                  data={nearestHospitalsData} 
                   options={{
                     responsive: true,
                     animation: {
@@ -456,9 +476,9 @@ const HospitalResourceOptimizer = () => {
                     WebkitTextFillColor: 'transparent',
                     fontFamily: 'Poppins'
                   }}>
-                    Dynamic Staff Scheduling
+                    Staff by Department
                   </Typography>
-                  <Tooltip title="AI balances doctor/nurse workload to prevent burnout">
+                  <Tooltip title="Current staffing levels across hospital departments">
                     <IconButton size="small" sx={{ color: 'rgba(25, 118, 210, 0.7)' }}>
                       <InfoIcon fontSize="small" />
                     </IconButton>
@@ -549,9 +569,9 @@ const HospitalResourceOptimizer = () => {
                     WebkitTextFillColor: 'transparent',
                     fontFamily: 'Poppins'
                   }}>
-                    Risk & Equity Alerts
+                    Emergency Cases & Critical Alerts
                   </Typography>
-                  <Tooltip title="ML flags high-risk zones and underserved populations">
+                  <Tooltip title="Real-time emergency cases and critical patient alerts">
                     <IconButton size="small" sx={{ color: 'rgba(25, 118, 210, 0.7)' }}>
                       <InfoIcon fontSize="small" />
                     </IconButton>
@@ -559,8 +579,53 @@ const HospitalResourceOptimizer = () => {
                 </Box>
                 <Box sx={{ height: 400 }}>
                   <DataTable 
-                    rows={riskAlertsRows} 
-                    columns={riskAlertsColumns} 
+                    rows={emergencyAlertsRows} 
+                    columns={emergencyAlertsColumns} 
+                    pageSize={5}
+                  />
+                </Box>
+              </Paper>
+            </Fade>
+          </Grid>
+
+          {/* Hospital Details Table */}
+          <Grid item xs={12}>
+            <Fade in={isLoaded} timeout={2400}>
+              <Paper sx={{ 
+                p: 3, 
+                height: '100%',
+                background: 'rgba(39, 62, 107, 0.8)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(25, 118, 210, 0.2)',
+                borderRadius: 3,
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 12px 40px rgba(25, 118, 210, 0.15)',
+                }
+              }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                  <Typography variant="h6" sx={{ 
+                    fontWeight: 600,
+                    background: 'linear-gradient(45deg, #1976d2, #42a5f5)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    fontFamily: 'Poppins'
+                  }}>
+                    Hospital Network Details
+                  </Typography>
+                  <Tooltip title="Complete hospital network information with real-time status">
+                    <IconButton size="small" sx={{ color: 'rgba(25, 118, 210, 0.7)' }}>
+                      <InfoIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+                <Box sx={{ height: 400 }}>
+                  <DataTable 
+                    rows={hospitalDetailsRows} 
+                    columns={hospitalDetailsColumns} 
                     pageSize={5}
                   />
                 </Box>

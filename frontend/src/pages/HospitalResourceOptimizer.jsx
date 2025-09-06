@@ -68,6 +68,23 @@ const HospitalResourceOptimizer = () => {
     setIsLoaded(true);
   }, []);
 
+  useEffect(() => {
+    // Automatically get user's location
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setPatientForm(prev => ({
+          ...prev,
+          patient_lat: position.coords.latitude,
+          patient_lon: position.coords.longitude
+        }));
+      },
+      (error) => {
+        console.error('Geolocation error:', error);
+        // Optionally set default values or show a message
+      }
+    );
+  }, []);
+
   const loadData = async () => {
     try {
       setLoading(true);
@@ -107,9 +124,16 @@ const HospitalResourceOptimizer = () => {
     try {
       setSearching(true);
       const results = await hospitalAPI.findHospital(patientForm);
+      console.log('Hospital search results:', results); // Debug log
       setSearchResults(results);
+      if (!results || results.length === 0) {
+        setError('No recommended hospitals found for the given criteria.');
+      } else {
+        setError(null);
+      }
     } catch (error) {
       handleApiError(error);
+      setError('Failed to fetch recommended hospitals.');
     } finally {
       setSearching(false);
     }
@@ -797,33 +821,14 @@ const HospitalResourceOptimizer = () => {
         <DialogTitle>Find Hospital for Patient</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Patient Latitude"
-                type="number"
-                value={patientForm.patient_lat}
-                onChange={(e) => setPatientForm(prev => ({ ...prev, patient_lat: parseFloat(e.target.value) }))}
-                helperText="Enter patient's latitude coordinate"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Patient Longitude"
-                type="number"
-                value={patientForm.patient_lon}
-                onChange={(e) => setPatientForm(prev => ({ ...prev, patient_lon: parseFloat(e.target.value) }))}
-                helperText="Enter patient's longitude coordinate"
-              />
-            </Grid>
             <Grid item xs={12}>
               <TextField
                 fullWidth
                 label="Severity Level"
                 type="number"
-                value={patientForm.severity}
-                onChange={(e) => setPatientForm(prev => ({ ...prev, severity: parseInt(e.target.value) }))}
+                value={isNaN(patientForm.severity) ? '' : String(patientForm.severity)}
+                onChange={(e) => setPatientForm(prev => ({ ...prev, severity: parseInt(e.target.value) }))
+                }
                 helperText="1-5 scale (1=low, 5=critical)"
                 inputProps={{ min: 1, max: 5 }}
               />
@@ -831,7 +836,7 @@ const HospitalResourceOptimizer = () => {
           </Grid>
 
           {/* Search Results */}
-          {searchResults.length > 0 && (
+          {searchResults.length > 0 ? (
             <Box sx={{ mt: 3 }}>
               <Typography variant="h6" sx={{ mb: 2, color: 'primary.main' }}>
                 Recommended Hospitals:
@@ -844,13 +849,19 @@ const HospitalResourceOptimizer = () => {
                   <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
                     Distance: {hospital.distance_km} km | 
                     Available Beds: {hospital.predicted_beds_available} | 
-                    Suitability Score: {(hospital.suitability_score * 100).toFixed(1)}%
+                    Suitability Score: {hospital.suitability_score !== undefined && !isNaN(hospital.suitability_score) ? (hospital.suitability_score * 100).toFixed(1) : ''}%
                   </Typography>
                   <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    Location: {hospital.hospital_latitude.toFixed(4)}, {hospital.hospital_longitude.toFixed(4)}
+                    Location: {hospital.hospital_latitude !== undefined && !isNaN(hospital.hospital_latitude) ? hospital.hospital_latitude.toFixed(4) : ''}, {hospital.hospital_longitude !== undefined && !isNaN(hospital.hospital_longitude) ? hospital.hospital_longitude.toFixed(4) : ''}
                   </Typography>
                 </Paper>
               ))}
+            </Box>
+          ) : (
+            <Box sx={{ mt: 3 }}>
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                {error ? error : 'No recommended hospitals found.'}
+              </Typography>
             </Box>
           )}
         </DialogContent>

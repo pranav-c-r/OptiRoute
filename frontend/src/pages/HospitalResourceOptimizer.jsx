@@ -38,6 +38,8 @@ import DataTable from '../components/shared/DataTable';
 
 // Import API service
 import { hospitalAPI, handleApiError } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
+import { addDoctorInfoToFirebase, addHospitalInfoToFirebase } from '../services/api';
 
 const HospitalResourceOptimizer = () => {
   const theme = useTheme();
@@ -63,9 +65,33 @@ const HospitalResourceOptimizer = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
 
+  // Doctor and Hospital Admin Forms
+  const { user, role } = useAuth();
+  const [doctorForm, setDoctorForm] = useState({ specialization: '', freeTime: '' });
+  const [hospitalForm, setHospitalForm] = useState({ beds: '', doctors: '', specializations: '' });
+  const [doctorSubmitting, setDoctorSubmitting] = useState(false);
+  const [hospitalSubmitting, setHospitalSubmitting] = useState(false);
+
   useEffect(() => {
     loadData();
     setIsLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    // Automatically get user's location
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setPatientForm(prev => ({
+          ...prev,
+          patient_lat: position.coords.latitude,
+          patient_lon: position.coords.longitude
+        }));
+      },
+      (error) => {
+        console.error('Geolocation error:', error);
+        // Optionally set default values or show a message
+      }
+    );
   }, []);
 
   const loadData = async () => {
@@ -107,9 +133,16 @@ const HospitalResourceOptimizer = () => {
     try {
       setSearching(true);
       const results = await hospitalAPI.findHospital(patientForm);
+      console.log('Hospital search results:', results); // Debug log
       setSearchResults(results);
+      if (!results || results.length === 0) {
+        setError('No recommended hospitals found for the given criteria.');
+      } else {
+        setError(null);
+      }
     } catch (error) {
       handleApiError(error);
+      setError('Failed to fetch recommended hospitals.');
     } finally {
       setSearching(false);
     }
@@ -236,6 +269,28 @@ const HospitalResourceOptimizer = () => {
     };
   });
 
+  // Handlers for doctor form
+  const handleDoctorFormChange = (e) => {
+    setDoctorForm({ ...doctorForm, [e.target.name]: e.target.value });
+  };
+  const handleDoctorFormSubmit = async (e) => {
+    e.preventDefault();
+    setDoctorSubmitting(true);
+    await addDoctorInfoToFirebase(user.uid, doctorForm);
+    setDoctorSubmitting(false);
+  };
+
+  // Handlers for hospital admin form
+  const handleHospitalFormChange = (e) => {
+    setHospitalForm({ ...hospitalForm, [e.target.name]: e.target.value });
+  };
+  const handleHospitalFormSubmit = async (e) => {
+    e.preventDefault();
+    setHospitalSubmitting(true);
+    await addHospitalInfoToFirebase(user.uid, hospitalForm);
+    setHospitalSubmitting(false);
+  };
+
   return (
     <Box sx={{ 
       p: 3,
@@ -333,6 +388,47 @@ const HospitalResourceOptimizer = () => {
             )}
           </Box>
         </Fade>
+
+        {/* Role-based forms */}
+        {role === 'doctor' && (
+          <Paper sx={{ p: 3, mb: 3, background: 'rgba(39,62,107,0.8)', borderRadius: 3 }}>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Doctor Profile</Typography>
+            <form onSubmit={handleDoctorFormSubmit}>
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={6}>
+                  <TextField label="Specialization" name="specialization" value={doctorForm.specialization} onChange={handleDoctorFormChange} fullWidth required />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField label="Free Time (e.g. 2pm-4pm)" name="freeTime" value={doctorForm.freeTime} onChange={handleDoctorFormChange} fullWidth required />
+                </Grid>
+                <Grid item xs={12}>
+                  <Button type="submit" variant="contained" disabled={doctorSubmitting}>{doctorSubmitting ? 'Saving...' : 'Save'}</Button>
+                </Grid>
+              </Grid>
+            </form>
+          </Paper>
+        )}
+        {role === 'hospital_admin' && (
+          <Paper sx={{ p: 3, mb: 3, background: 'rgba(39,62,107,0.8)', borderRadius: 3 }}>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Hospital Admin Panel</Typography>
+            <form onSubmit={handleHospitalFormSubmit}>
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={4}>
+                  <TextField label="Available Beds" name="beds" value={hospitalForm.beds} onChange={handleHospitalFormChange} fullWidth required type="number" />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField label="Available Doctors" name="doctors" value={hospitalForm.doctors} onChange={handleHospitalFormChange} fullWidth required type="number" />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField label="Doctor Specializations" name="specializations" value={hospitalForm.specializations} onChange={handleHospitalFormChange} fullWidth required />
+                </Grid>
+                <Grid item xs={12}>
+                  <Button type="submit" variant="contained" disabled={hospitalSubmitting}>{hospitalSubmitting ? 'Saving...' : 'Save'}</Button>
+                </Grid>
+              </Grid>
+            </form>
+          </Paper>
+        )}
 
         <Grid container spacing={4}>
           {/* Feature cards */}
@@ -797,33 +893,14 @@ const HospitalResourceOptimizer = () => {
         <DialogTitle>Find Hospital for Patient</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Patient Latitude"
-                type="number"
-                value={patientForm.patient_lat}
-                onChange={(e) => setPatientForm(prev => ({ ...prev, patient_lat: parseFloat(e.target.value) }))}
-                helperText="Enter patient's latitude coordinate"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Patient Longitude"
-                type="number"
-                value={patientForm.patient_lon}
-                onChange={(e) => setPatientForm(prev => ({ ...prev, patient_lon: parseFloat(e.target.value) }))}
-                helperText="Enter patient's longitude coordinate"
-              />
-            </Grid>
             <Grid item xs={12}>
               <TextField
                 fullWidth
                 label="Severity Level"
                 type="number"
-                value={patientForm.severity}
-                onChange={(e) => setPatientForm(prev => ({ ...prev, severity: parseInt(e.target.value) }))}
+                value={isNaN(patientForm.severity) ? '' : String(patientForm.severity)}
+                onChange={(e) => setPatientForm(prev => ({ ...prev, severity: parseInt(e.target.value) }))
+                }
                 helperText="1-5 scale (1=low, 5=critical)"
                 inputProps={{ min: 1, max: 5 }}
               />
@@ -831,7 +908,7 @@ const HospitalResourceOptimizer = () => {
           </Grid>
 
           {/* Search Results */}
-          {searchResults.length > 0 && (
+          {searchResults.length > 0 ? (
             <Box sx={{ mt: 3 }}>
               <Typography variant="h6" sx={{ mb: 2, color: 'primary.main' }}>
                 Recommended Hospitals:
@@ -844,13 +921,19 @@ const HospitalResourceOptimizer = () => {
                   <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
                     Distance: {hospital.distance_km} km | 
                     Available Beds: {hospital.predicted_beds_available} | 
-                    Suitability Score: {(hospital.suitability_score * 100).toFixed(1)}%
+                    Suitability Score: {hospital.suitability_score !== undefined && !isNaN(hospital.suitability_score) ? (hospital.suitability_score * 100).toFixed(1) : ''}%
                   </Typography>
                   <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    Location: {hospital.hospital_latitude.toFixed(4)}, {hospital.hospital_longitude.toFixed(4)}
+                    Location: {hospital.hospital_latitude !== undefined && !isNaN(hospital.hospital_latitude) ? hospital.hospital_latitude.toFixed(4) : ''}, {hospital.hospital_longitude !== undefined && !isNaN(hospital.hospital_longitude) ? hospital.hospital_longitude.toFixed(4) : ''}
                   </Typography>
                 </Paper>
               ))}
+            </Box>
+          ) : (
+            <Box sx={{ mt: 3 }}>
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                {error ? error : 'No recommended hospitals found.'}
+              </Typography>
             </Box>
           )}
         </DialogContent>

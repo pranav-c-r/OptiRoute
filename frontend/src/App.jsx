@@ -53,7 +53,6 @@ function App() {
               </ProtectedRoute>
             } />
             
-            {/* All authenticated users can access all pages */}
             <Route path="/hospital-optimizer" element={
               <ProtectedRoute>
                 <Layout>
@@ -88,7 +87,7 @@ function App() {
             
             {/* Role-specific routes */}
             <Route path="/doctor-dashboard" element={
-              <ProtectedRoute allowedRoles={['doctor']}>
+              <ProtectedRoute allowedRoles={["doctor"]}>
                 <Layout>
                   <DoctorDashboard />
                 </Layout>
@@ -96,7 +95,7 @@ function App() {
             } />
             
             <Route path="/hospital-admin" element={
-              <ProtectedRoute allowedRoles={['hospital_admin']}>
+              <ProtectedRoute allowedRoles={["hospital_admin"]}>
                 <Layout>
                   <HospitalAdminDashboard />
                 </Layout>

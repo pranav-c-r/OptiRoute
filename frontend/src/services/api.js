@@ -195,6 +195,54 @@ export const wasteOptimizerAPI = {
   }
 };
 
+import { database } from '../config/firebase';
+import { doc, setDoc } from 'firebase/firestore';
+
+export const addDoctorInfoToFirebase = async (uid, doctorInfo) => {
+  try {
+    await setDoc(doc(database, 'doctors', uid), doctorInfo, { merge: true });
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+};
+
+export const addHospitalInfoToFirebase = async (uid, hospitalInfo) => {
+  try {
+    await setDoc(doc(database, 'hospitals', uid), hospitalInfo, { merge: true });
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+};
+
+export const addFarmerInfoToFirebase = async (uid, farmerInfo) => {
+  try {
+    await setDoc(doc(database, 'farmers', uid), farmerInfo, { merge: true });
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+};
+
+export const addWarehouseInfoToFirebase = async (uid, warehouseInfo) => {
+  try {
+    await setDoc(doc(database, 'warehouses', uid), warehouseInfo, { merge: true });
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+};
+
+export const addLogisticsInfoToFirebase = async (uid, logisticsInfo) => {
+  try {
+    await setDoc(doc(database, 'logistics', uid), logisticsInfo, { merge: true });
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+};
+
 // Utility function for error handling
 export const handleApiError = (error) => {
   console.error('API Error:', error);

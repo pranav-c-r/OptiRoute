@@ -10,19 +10,16 @@ import {
   useTheme,
   IconButton,
   Tooltip,
-  Divider,
-  Fade,
-  Slide,
-  Zoom,
   Container
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import DownloadIcon from '@mui/icons-material/Download';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import AirlineSeatFlatIcon from '@mui/icons-material/AirlineSeatFlat';
 import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
-import AmbulanceIcon from '@mui/icons-material/MedicalServices'; // Using MedicalServices as a substitute for Ambulance
+import LocalShippingIcon from '@mui/icons-material/LocalShipping'; // better ambulance substitute
 import PeopleIcon from '@mui/icons-material/People';
 
 import DashboardCard from '../components/shared/DashboardCard';
@@ -41,26 +38,6 @@ const HospitalOrchestrator = () => {
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
-
-  // Helper function for alpha color
-  function alpha(color, opacity) {
-    return theme.palette.mode === 'light'
-      ? `rgba(${hexToRgb(color)}, ${opacity})`
-      : `rgba(${hexToRgb(color)}, ${opacity})`;
-  }
-
-  // Helper function to convert hex to rgb
-  function hexToRgb(hex) {
-    // Remove the hash if it exists
-    hex = hex.replace('#', '');
-    
-    // Parse the hex values
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
-    
-    return `${r}, ${g}, ${b}`;
-  }
 
   // Sample data for charts
   const bedOccupancyData = {
@@ -153,7 +130,7 @@ const HospitalOrchestrator = () => {
       position: 'relative',
       overflow: 'hidden'
     }}>
-      {/* Animated background elements */}
+      {/* Background */}
       <Box
         sx={{
           position: 'absolute',
@@ -172,204 +149,232 @@ const HospitalOrchestrator = () => {
       />
       
       <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 1, p: 3 }}>
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <LocalHospitalIcon sx={{ fontSize: 32, color: '#1976d2', mr: 2 }} />
-          <Typography variant="h4" component="h1" gutterBottom>
-            Hospital Orchestrator
-          </Typography>
+        {/* Header */}
+        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <LocalHospitalIcon sx={{ fontSize: 32, color: '#1976d2', mr: 2 }} />
+            <Typography variant="h4" component="h1" gutterBottom>
+              Hospital Orchestrator
+            </Typography>
+          </Box>
+          <Box>
+            <Button 
+              variant="outlined" 
+              startIcon={<DownloadIcon />}
+              size="small"
+              sx={{ mr: 1 }}
+            >
+              Export
+            </Button>
+            <Button 
+              variant="contained" 
+              startIcon={<RefreshIcon />}
+              size="small"
+            >
+              Refresh Data
+            </Button>
+          </Box>
         </Box>
-        <Box>
-          <Button 
-            variant="outlined" 
-            startIcon={<DownloadIcon />}
-            size="small"
-            sx={{ mr: 1 }}
+
+        {/* Summary Cards */}
+        <Grid container spacing={3} sx={{ mb: 3 }}>
+          <Grid item xs={12} sm={6} md={3}>
+            <DashboardCard
+              title="Total Patients"
+              subtitle="Current hospital network"
+              icon={<PeopleIcon color="primary" />}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 2 }}>
+                <Typography variant="h4">1,248</Typography>
+                <Chip 
+                  label="+12% this week" 
+                  size="small" 
+                  color="success" 
+                  variant="outlined" 
+                />
+              </Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                85 new admissions today
+              </Typography>
+            </DashboardCard>
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={3}>
+            <DashboardCard
+              title="Available Beds"
+              subtitle="Across all hospitals"
+              icon={<AirlineSeatFlatIcon color="secondary" />}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 2 }}>
+                <Typography variant="h4">437</Typography>
+                <Chip 
+                  label="Critical in 2 hospitals" 
+                  size="small" 
+                  color="error" 
+                  variant="outlined" 
+                />
+              </Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                28 ICU beds available
+              </Typography>
+            </DashboardCard>
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={3}>
+            <DashboardCard
+              title="Doctors On Duty"
+              subtitle="Current shift"
+              icon={<MedicalServicesIcon sx={{ color: theme.palette.success.main }} />}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 2 }}>
+                <Typography variant="h4">188</Typography>
+                <Chip 
+                  label="Fully staffed" 
+                  size="small" 
+                  color="success" 
+                  variant="outlined" 
+                />
+              </Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                42 specialists available
+              </Typography>
+            </DashboardCard>
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={3}>
+            <DashboardCard
+              title="Ambulances"
+              subtitle="Emergency response"
+              icon={<LocalShippingIcon sx={{ color: theme.palette.info.main }} />}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 2 }}>
+                <Typography variant="h4">32</Typography>
+                <Chip 
+                  label="5 dispatched" 
+                  size="small" 
+                  color="info" 
+                  variant="outlined" 
+                />
+              </Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                Avg response time: 8.5 min
+              </Typography>
+            </DashboardCard>
+          </Grid>
+        </Grid>
+
+        {/* Tabs */}
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+          <Tabs 
+            value={tabValue} 
+            onChange={handleTabChange} 
+            aria-label="hospital orchestrator tabs"
+            textColor="primary"
+            indicatorColor="primary"
           >
-            Export
-          </Button>
-          <Button 
-            variant="contained" 
-            startIcon={<RefreshIcon />}
-            size="small"
-          >
-            Refresh Data
-          </Button>
+            <Tab label="Dashboard" />
+            <Tab label="Patient Allocation" />
+            <Tab label="Hospital Status" />
+            <Tab label="Staff Scheduling" />
+            <Tab label="Analytics" />
+          </Tabs>
         </Box>
-      </Box>
 
-      {/* Summary Cards */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <DashboardCard
-            title="Total Patients"
-            subtitle="Current hospital network"
-            icon={<PeopleIcon color="primary" />}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 2 }}>
-              <Typography variant="h4">1,248</Typography>
-              <Chip 
-                label="+12% this week" 
-                size="small" 
-                color="success" 
-                variant="outlined" 
-              />
-            </Box>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              85 new admissions today
-            </Typography>
-          </DashboardCard>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <DashboardCard
-            title="Available Beds"
-            subtitle="Across all hospitals"
-            icon={<AirlineSeatFlatIcon color="secondary" />}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 2 }}>
-              <Typography variant="h4">437</Typography>
-              <Chip 
-                label="Critical in 2 hospitals" 
-                size="small" 
-                color="error" 
-                variant="outlined" 
-              />
-            </Box>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              28 ICU beds available
-            </Typography>
-          </DashboardCard>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <DashboardCard
-            title="Doctors On Duty"
-            subtitle="Current shift"
-            icon={<MedicalServicesIcon sx={{ color: theme.palette.success.main }} />}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 2 }}>
-              <Typography variant="h4">188</Typography>
-              <Chip 
-                label="Fully staffed" 
-                size="small" 
-                color="success" 
-                variant="outlined" 
-              />
-            </Box>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              42 specialists available
-            </Typography>
-          </DashboardCard>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <DashboardCard
-            title="Ambulances"
-            subtitle="Emergency response"
-            icon={<AmbulanceIcon sx={{ color: theme.palette.info.main }} />}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 2 }}>
-              <Typography variant="h4">32</Typography>
-              <Chip 
-                label="5 dispatched" 
-                size="small" 
-                color="info" 
-                variant="outlined" 
-              />
-            </Box>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              Avg response time: 8.5 min
-            </Typography>
-          </DashboardCard>
-        </Grid>
-      </Grid>
-
-      {/* Tabs */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs 
-          value={tabValue} 
-          onChange={handleTabChange} 
-          aria-label="hospital orchestrator tabs"
-          textColor="primary"
-          indicatorColor="primary"
-        >
-          <Tab label="Dashboard" />
-          <Tab label="Patient Allocation" />
-          <Tab label="Hospital Status" />
-          <Tab label="Staff Scheduling" />
-          <Tab label="Analytics" />
-        </Tabs>
-      </Box>
-
-      {/* Tab Content */}
-      <Box sx={{ mt: 2 }}>
-        {tabValue === 0 && (
-          <>
-            {/* Charts */}
-            <Grid container spacing={3} sx={{ mb: 3 }}>
-              <Grid item xs={12} md={6}>
-                <DashboardCard
-                  title="Bed Occupancy by Department"
-                  subtitle="Current status"
-                  headerAction={
-                    <Tooltip title="Filter">
-                      <IconButton size="small">
-                        <FilterListIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  }
-                >
-                  <ChartComponent 
-                    type="bar" 
-                    data={bedOccupancyData} 
-                    height={300}
-                    options={{
-                      plugins: {
-                        legend: {
-                          position: 'top',
+        {/* Tab Content */}
+        <Box sx={{ mt: 2 }}>
+          {tabValue === 0 && (
+            <>
+              {/* Charts */}
+              <Grid container spacing={3} sx={{ mb: 3 }}>
+                <Grid item xs={12} md={6}>
+                  <DashboardCard
+                    title="Bed Occupancy by Department"
+                    subtitle="Current status"
+                    headerAction={
+                      <Tooltip title="Filter">
+                        <IconButton size="small">
+                          <FilterListIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    }
+                  >
+                    <ChartComponent 
+                      type="bar" 
+                      data={bedOccupancyData} 
+                      height={300}
+                      options={{
+                        plugins: {
+                          legend: {
+                            position: 'top',
+                          },
                         },
-                      },
-                      scales: {
-                        x: {
-                          stacked: true,
+                        scales: {
+                          x: {
+                            stacked: true,
+                          },
+                          y: {
+                            stacked: true,
+                            max: 100,
+                          },
                         },
-                        y: {
-                          stacked: true,
-                          max: 100,
-                        },
-                      },
-                    }}
-                  />
-                </DashboardCard>
+                      }}
+                    />
+                  </DashboardCard>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <DashboardCard
+                    title="Patient Flow Analysis"
+                    subtitle="Last 7 days"
+                    headerAction={
+                      <Tooltip title="Filter">
+                        <IconButton size="small">
+                          <FilterListIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    }
+                  >
+                    <ChartComponent 
+                      type="line" 
+                      data={patientFlowData} 
+                      height={300}
+                    />
+                  </DashboardCard>
+                </Grid>
               </Grid>
-              <Grid item xs={12} md={6}>
-                <DashboardCard
-                  title="Patient Flow Analysis"
-                  subtitle="Last 7 days"
-                  headerAction={
-                    <Tooltip title="Filter">
-                      <IconButton size="small">
-                        <FilterListIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  }
-                >
-                  <ChartComponent 
-                    type="line" 
-                    data={patientFlowData} 
-                    height={300}
-                  />
-                </DashboardCard>
-              </Grid>
-            </Grid>
 
-            {/* Tables */}
+              {/* Tables */}
+              <Grid container spacing={3}>
+                <Grid item xs={12}>
+                  <DashboardCard
+                    title="Hospital Network Status"
+                    subtitle="Real-time capacity and resource allocation"
+                    headerAction={
+                      <Tooltip title="Refresh">
+                        <IconButton size="small">
+                          <RefreshIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    }
+                  >
+                    <DataTable 
+                      rows={hospitalRows} 
+                      columns={hospitalColumns} 
+                      autoHeight 
+                      pageSize={5}
+                      showToolbar
+                    />
+                  </DashboardCard>
+                </Grid>
+              </Grid>
+            </>
+          )}
+
+          {tabValue === 1 && (
             <Grid container spacing={3}>
               <Grid item xs={12}>
                 <DashboardCard
-                  title="Hospital Network Status"
-                  subtitle="Real-time capacity and resource allocation"
+                  title="Patient Allocation"
+                  subtitle="Current patient assignments and transfers"
                   headerAction={
                     <Tooltip title="Refresh">
                       <IconButton size="small">
@@ -379,56 +384,30 @@ const HospitalOrchestrator = () => {
                   }
                 >
                   <DataTable 
-                    rows={hospitalRows} 
-                    columns={hospitalColumns} 
+                    rows={patientRows} 
+                    columns={patientColumns} 
                     autoHeight 
-                    pageSize={5}
+                    pageSize={10}
                     showToolbar
                   />
                 </DashboardCard>
               </Grid>
             </Grid>
-          </>
-        )}
+          )}
 
-        {tabValue === 1 && (
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <DashboardCard
-                title="Patient Allocation"
-                subtitle="Current patient assignments and transfers"
-                headerAction={
-                  <Tooltip title="Refresh">
-                    <IconButton size="small">
-                      <RefreshIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                }
-              >
-                <DataTable 
-                  rows={patientRows} 
-                  columns={patientColumns} 
-                  autoHeight 
-                  pageSize={10}
-                  showToolbar
-                />
-              </DashboardCard>
-            </Grid>
-          </Grid>
-        )}
+          {tabValue === 2 && (
+            <Typography variant="h6">Hospital Status content</Typography>
+          )}
 
-        {tabValue === 2 && (
-          <Typography variant="h6">Hospital Status content</Typography>
-        )}
+          {tabValue === 3 && (
+            <Typography variant="h6">Staff Scheduling content</Typography>
+          )}
 
-        {tabValue === 3 && (
-          <Typography variant="h6">Staff Scheduling content</Typography>
-        )}
-
-        {tabValue === 4 && (
-          <Typography variant="h6">Analytics content</Typography>
-        )}
-      </Box>
+          {tabValue === 4 && (
+            <Typography variant="h6">Analytics content</Typography>
+          )}
+        </Box>
+      </Container>
     </Box>
   );
 };

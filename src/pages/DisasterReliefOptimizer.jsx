@@ -31,85 +31,90 @@ const DisasterReliefOptimizer = () => {
     setIsLoaded(true);
   }, []);
 
-  // Sample data for demand forecasting chart
-  const demandForecastData = {
-    labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'],
+  // Real-time disaster impact assessment
+  const disasterImpactData = {
+    labels: ['Hour 0', 'Hour 6', 'Hour 12', 'Hour 18', 'Hour 24', 'Hour 30', 'Hour 36'],
     datasets: [
       {
-        label: 'Food (kg)',
-        data: [2500, 3200, 2800, 2600, 2400, 2200, 2000],
+        label: 'Affected Population',
+        data: [500, 1200, 2500, 3800, 4500, 4200, 4000],
         borderColor: '#1976d2',
         backgroundColor: 'rgba(25, 118, 210, 0.3)',
         fill: true,
       },
       {
-        label: 'Water (liters)',
-        data: [5000, 6500, 6000, 5500, 5000, 4500, 4000],
+        label: 'Evacuated',
+        data: [0, 200, 800, 1500, 2000, 2200, 2300],
         borderColor: '#42a5f5',
         backgroundColor: 'rgba(66, 165, 245, 0.3)',
         fill: true,
       },
       {
-        label: 'Medical Kits',
-        data: [500, 650, 600, 550, 500, 450, 400],
-        borderColor: theme.palette.error.main,
-        backgroundColor: theme.palette.error.main + '40',
+        label: 'Injured',
+        data: [50, 120, 200, 280, 320, 300, 290],
+        borderColor: '#f44336',
+        backgroundColor: 'rgba(244, 67, 54, 0.3)',
         fill: true,
       }
     ]
   };
 
-  // Sample data for delivery routing
-  const deliveryRoutingData = {
-    labels: ['Route A', 'Route B', 'Route C', 'Route D', 'Route E'],
+  // Relief distribution centers and supply status
+  const reliefCentersData = {
+    labels: ['Central Depot', 'North Station', 'South Hub', 'East Base', 'West Point'],
     datasets: [
       {
-        label: 'Time (hours)',
-        data: [2.5, 3.2, 1.8, 4.1, 2.7],
-        backgroundColor: theme.palette.primary.main,
+        label: 'Food Supplies (kg)',
+        data: [2500, 1800, 2200, 1600, 2000],
+        backgroundColor: '#1976d2',
       },
       {
-        label: 'Fuel Efficiency (km/l)',
-        data: [8.5, 7.2, 9.8, 6.5, 8.1],
-        backgroundColor: theme.palette.secondary.main,
+        label: 'Water (liters)',
+        data: [5000, 3600, 4400, 3200, 4000],
+        backgroundColor: '#42a5f5',
+      },
+      {
+        label: 'Medical Kits',
+        data: [200, 150, 180, 120, 160],
+        backgroundColor: '#f44336',
       }
     ]
   };
 
-  // Sample data for resource allocation
-  const resourceAllocationData = {
-    labels: ['Zone A', 'Zone B', 'Zone C', 'Zone D', 'Zone E'],
+  // Emergency response teams deployment
+  const responseTeamsData = {
+    labels: ['Search & Rescue', 'Medical Teams', 'Logistics', 'Communications', 'Security'],
     datasets: [
       {
-        label: 'Current Allocation',
-        data: [30, 25, 15, 20, 10],
-        backgroundColor: theme.palette.primary.main,
+        label: 'Deployed Teams',
+        data: [8, 12, 6, 4, 10],
+        backgroundColor: '#1976d2',
       },
       {
-        label: 'Recommended Allocation',
-        data: [20, 20, 25, 15, 20],
-        backgroundColor: theme.palette.secondary.main,
+        label: 'Available Teams',
+        data: [4, 8, 6, 8, 5],
+        backgroundColor: '#42a5f5',
       }
     ]
   };
 
-  // Sample data for community needs table
-  const communityNeedsColumns = [
+  // Emergency shelters and evacuation centers
+  const evacuationCentersColumns = [
     { field: 'id', headerName: 'ID', width: 70 },
-    { field: 'community', headerName: 'Community', width: 150 },
-    { field: 'population', headerName: 'Population', width: 120, type: 'number' },
-    { field: 'foodNeeded', headerName: 'Food Needed (kg)', width: 150, type: 'number' },
-    { field: 'waterNeeded', headerName: 'Water Needed (L)', width: 150, type: 'number' },
-    { field: 'medicalNeeded', headerName: 'Medical Kits', width: 120, type: 'number' },
-    { field: 'priority', headerName: 'Priority', width: 120 },
+    { field: 'location', headerName: 'Location', width: 200 },
+    { field: 'capacity', headerName: 'Capacity', width: 100, type: 'number' },
+    { field: 'currentOccupancy', headerName: 'Current Occupancy', width: 150, type: 'number' },
+    { field: 'supplies', headerName: 'Supplies Status', width: 150 },
+    { field: 'accessibility', headerName: 'Accessibility', width: 120 },
+    { field: 'status', headerName: 'Status', width: 120 },
   ];
 
-  const communityNeedsRows = [
-    { id: 1, community: 'Riverside', population: 1200, foodNeeded: 600, waterNeeded: 2400, medicalNeeded: 60, priority: 'High' },
-    { id: 2, community: 'Hillside', population: 850, foodNeeded: 425, waterNeeded: 1700, medicalNeeded: 42, priority: 'Medium' },
-    { id: 3, community: 'Downtown', population: 2000, foodNeeded: 1000, waterNeeded: 4000, medicalNeeded: 100, priority: 'Critical' },
-    { id: 4, community: 'Eastside', population: 750, foodNeeded: 375, waterNeeded: 1500, medicalNeeded: 38, priority: 'Medium' },
-    { id: 5, community: 'Westend', population: 1500, foodNeeded: 750, waterNeeded: 3000, medicalNeeded: 75, priority: 'High' },
+  const evacuationCentersRows = [
+    { id: 1, location: 'Central High School', capacity: 500, currentOccupancy: 320, supplies: 'Adequate', accessibility: 'Wheelchair Access', status: 'Open' },
+    { id: 2, location: 'Community Center', capacity: 300, currentOccupancy: 280, supplies: 'Low', accessibility: 'Full Access', status: 'Open' },
+    { id: 3, location: 'Sports Complex', capacity: 800, currentOccupancy: 450, supplies: 'Adequate', accessibility: 'Partial Access', status: 'Open' },
+    { id: 4, location: 'Church Hall', capacity: 200, currentOccupancy: 180, supplies: 'Critical', accessibility: 'Full Access', status: 'Open' },
+    { id: 5, location: 'Library', capacity: 150, currentOccupancy: 120, supplies: 'Adequate', accessibility: 'Wheelchair Access', status: 'Open' },
   ];
 
   return (
@@ -275,9 +280,9 @@ const DisasterReliefOptimizer = () => {
                     WebkitTextFillColor: 'transparent',
                     fontFamily: 'Poppins'
                   }}>
-                    Shelter Needs Forecast
+                    Real-time Disaster Impact
                   </Typography>
-                  <Tooltip title="ML predictions based on historical and population data">
+                  <Tooltip title="Live tracking of affected population, evacuations, and injuries">
                     <IconButton size="small" sx={{ color: 'rgba(25, 118, 210, 0.7)' }}>
                       <InfoIcon fontSize="small" />
                     </IconButton>
@@ -285,7 +290,7 @@ const DisasterReliefOptimizer = () => {
                 </Box>
                 <ChartComponent 
                   type="line" 
-                  data={demandForecastData} 
+                  data={disasterImpactData} 
                   options={{
                     responsive: true,
                     animation: {
@@ -368,9 +373,9 @@ const DisasterReliefOptimizer = () => {
                     WebkitTextFillColor: 'transparent',
                     fontFamily: 'Poppins'
                   }}>
-                    Optimal Delivery Routing
+                    Relief Distribution Centers
                   </Typography>
-                  <Tooltip title="AI finds fastest, most fuel-efficient paths for trucks and volunteers">
+                  <Tooltip title="Current supply levels at relief distribution centers">
                     <IconButton size="small" sx={{ color: 'rgba(25, 118, 210, 0.7)' }}>
                       <InfoIcon fontSize="small" />
                     </IconButton>
@@ -378,7 +383,7 @@ const DisasterReliefOptimizer = () => {
                 </Box>
                 <ChartComponent 
                   type="bar" 
-                  data={deliveryRoutingData} 
+                  data={reliefCentersData} 
                   options={{
                     responsive: true,
                     animation: {
@@ -461,9 +466,9 @@ const DisasterReliefOptimizer = () => {
                     WebkitTextFillColor: 'transparent',
                     fontFamily: 'Poppins'
                   }}>
-                    Resource Reallocation
+                    Emergency Response Teams
                   </Typography>
-                  <Tooltip title="ML reallocates excess resources to underserved areas">
+                  <Tooltip title="Current deployment status of emergency response teams">
                     <IconButton size="small" sx={{ color: 'rgba(25, 118, 210, 0.7)' }}>
                       <InfoIcon fontSize="small" />
                     </IconButton>
@@ -471,7 +476,7 @@ const DisasterReliefOptimizer = () => {
                 </Box>
                 <ChartComponent 
                   type="bar" 
-                  data={resourceAllocationData} 
+                  data={responseTeamsData} 
                   options={{
                     responsive: true,
                     animation: {
@@ -554,9 +559,9 @@ const DisasterReliefOptimizer = () => {
                     WebkitTextFillColor: 'transparent',
                     fontFamily: 'Poppins'
                   }}>
-                    Community Needs Detection
+                    Emergency Shelters & Evacuation Centers
                   </Typography>
-                  <Tooltip title="AI uses mobile inputs or satellite data to identify urgent needs">
+                  <Tooltip title="Real-time status of emergency shelters and evacuation centers">
                     <IconButton size="small" sx={{ color: 'rgba(25, 118, 210, 0.7)' }}>
                       <InfoIcon fontSize="small" />
                     </IconButton>
@@ -564,8 +569,8 @@ const DisasterReliefOptimizer = () => {
                 </Box>
                 <Box sx={{ height: 400 }}>
                   <DataTable 
-                    rows={communityNeedsRows} 
-                    columns={communityNeedsColumns} 
+                    rows={evacuationCentersRows} 
+                    columns={evacuationCentersColumns} 
                     pageSize={5}
                   />
                 </Box>

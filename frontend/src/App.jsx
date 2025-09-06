@@ -51,8 +51,9 @@ function App() {
               </ProtectedRoute>
             } />
             
+            {/* Normal users have access to all pages */}
             <Route path="/hospital-optimizer" element={
-              <ProtectedRoute allowedRoles={['doctor', 'nurse', 'hospital_admin', 'ambulance_driver']}>
+              <ProtectedRoute allowedRoles={['normal_user', 'doctor', 'hospital_admin', 'ambulance_driver']}>
                 <Layout>
                   <HospitalResourceOptimizer />
                 </Layout>
@@ -60,7 +61,7 @@ function App() {
             } />
             
             <Route path="/disaster-relief" element={
-              <ProtectedRoute allowedRoles={['relief_volunteer', 'ngo', 'logistics_driver', 'hospital_admin']}>
+              <ProtectedRoute allowedRoles={['normal_user', 'relief_volunteer', 'ngo', 'logistics_driver', 'hospital_admin']}>
                 <Layout>
                   <DisasterReliefOptimizer />
                 </Layout>
@@ -68,7 +69,7 @@ function App() {
             } />
             
             <Route path="/hunger-waste" element={
-              <ProtectedRoute allowedRoles={['farmer', 'warehouse_manager', 'ngo', 'logistics_driver', 'relief_volunteer']}>
+              <ProtectedRoute allowedRoles={['normal_user', 'farmer', 'warehouse_manager', 'ngo', 'logistics_driver', 'relief_volunteer']}>
                 <Layout>
                   <HungerWasteOptimizer />
                 </Layout>
@@ -76,7 +77,7 @@ function App() {
             } />
             
             <Route path="/shelter-allocation" element={
-              <ProtectedRoute allowedRoles={['shelter_manager', 'housing_authority', 'landlord', 'ngo', 'relief_volunteer']}>
+              <ProtectedRoute allowedRoles={['normal_user', 'shelter_manager', 'housing_authority', 'landlord', 'ngo', 'relief_volunteer']}>
                 <Layout>
                   <SmartShelterAllocation />
                 </Layout>
@@ -84,7 +85,7 @@ function App() {
             } />
             
             <Route path="/hospital-orchestrator" element={
-              <ProtectedRoute allowedRoles={['hospital_admin', 'doctor', 'nurse']}>
+              <ProtectedRoute allowedRoles={['normal_user', 'hospital_admin', 'doctor']}>
                 <Layout>
                   <HospitalOrchestrator />
                 </Layout>
@@ -92,7 +93,7 @@ function App() {
             } />
             
             <Route path="/relief-planner" element={
-              <ProtectedRoute allowedRoles={['ngo', 'relief_volunteer', 'logistics_driver', 'hospital_admin']}>
+              <ProtectedRoute allowedRoles={['normal_user', 'ngo', 'relief_volunteer', 'logistics_driver', 'hospital_admin']}>
                 <Layout>
                   <ReliefPlanner />
                 </Layout>

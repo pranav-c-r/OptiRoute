@@ -11,11 +11,13 @@ import {
   Link,
   useTheme,
   Fade,
-  Slide
+  Slide,
+  Divider
 } from '@mui/material';
 import {
   LocalHospital as HospitalIcon,
-  Login as LoginIcon
+  Login as LoginIcon,
+  Google as GoogleIcon
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
@@ -23,12 +25,12 @@ import { useNavigate, Link as RouterLink } from 'react-router-dom';
 const Login = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, signInWithGoogle } = useAuth();
   const [formData, setFormData] = useState({
-    email: '',
-    password: ''
+    username: ''
   });
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleChange = (e) => {
@@ -43,7 +45,7 @@ const Login = () => {
     setLoading(true);
     setError('');
 
-    const result = await login(formData.email, formData.password);
+    const result = await login(formData.username);
     
     if (result.success) {
       navigate('/dashboard');
@@ -52,6 +54,21 @@ const Login = () => {
     }
     
     setLoading(false);
+  };
+
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    setError('');
+
+    const result = await signInWithGoogle();
+    
+    if (result.success) {
+      navigate('/dashboard');
+    } else {
+      setError(result.error);
+    }
+    
+    setGoogleLoading(false);
   };
 
   return (
@@ -133,41 +150,9 @@ const Login = () => {
             <form onSubmit={handleSubmit}>
               <TextField
                 fullWidth
-                label="Email Address"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                sx={{
-                  mb: 3,
-                  '& .MuiOutlinedInput-root': {
-                    color: 'white',
-                    '& fieldset': {
-                      borderColor: 'rgba(255, 255, 255, 0.3)',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: 'rgba(25, 118, 210, 0.5)',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#1976d2',
-                    },
-                  },
-                  '& .MuiInputLabel-root': {
-                    color: 'rgba(255, 255, 255, 0.7)',
-                    '&.Mui-focused': {
-                      color: '#1976d2',
-                    },
-                  },
-                }}
-              />
-
-              <TextField
-                fullWidth
-                label="Password"
-                name="password"
-                type="password"
-                value={formData.password}
+                label="Username"
+                name="username"
+                value={formData.username}
                 onChange={handleChange}
                 required
                 sx={{
@@ -204,10 +189,10 @@ const Login = () => {
                 fullWidth
                 variant="contained"
                 size="large"
-                disabled={loading}
+                disabled={loading || googleLoading}
                 startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <LoginIcon />}
                 sx={{
-                  mb: 3,
+                  mb: 2,
                   py: 1.5,
                   background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
                   boxShadow: '0 4px 15px rgba(25, 118, 210, 0.3)',
@@ -221,6 +206,39 @@ const Login = () => {
                 }}
               >
                 {loading ? 'Signing In...' : 'Sign In'}
+              </Button>
+
+              <Box sx={{ display: 'flex', alignItems: 'center', my: 2 }}>
+                <Divider sx={{ flex: 1, borderColor: 'rgba(255, 255, 255, 0.2)' }} />
+                <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)', mx: 2 }}>
+                  OR
+                </Typography>
+                <Divider sx={{ flex: 1, borderColor: 'rgba(255, 255, 255, 0.2)' }} />
+              </Box>
+
+              <Button
+                fullWidth
+                variant="outlined"
+                size="large"
+                disabled={loading || googleLoading}
+                startIcon={googleLoading ? <CircularProgress size={20} color="inherit" /> : <GoogleIcon />}
+                onClick={handleGoogleSignIn}
+                sx={{
+                  mb: 3,
+                  py: 1.5,
+                  borderColor: 'rgba(255, 255, 255, 0.3)',
+                  color: 'white',
+                  '&:hover': {
+                    borderColor: '#1976d2',
+                    backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                  },
+                  '&:disabled': {
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    color: 'rgba(255, 255, 255, 0.3)',
+                  }
+                }}
+              >
+                {googleLoading ? 'Signing In...' : 'Continue with Google'}
               </Button>
 
               <Box sx={{ textAlign: 'center' }}>
@@ -258,13 +276,13 @@ const Login = () => {
             borderRadius: 2
           }}>
             <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.8)', textAlign: 'center', mb: 1 }}>
-              Demo Credentials:
+              Demo Usernames:
             </Typography>
             <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)', textAlign: 'center', fontSize: '0.8rem' }}>
-              admin@optiroute.com / doctor@optiroute.com / nurse@optiroute.com / volunteer@optiroute.com
+              admin / doctor / ambulance / volunteer / normal
             </Typography>
             <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)', textAlign: 'center', fontSize: '0.8rem' }}>
-              Password: password123
+              Or use Google Sign-in
             </Typography>
           </Paper>
         </Fade>

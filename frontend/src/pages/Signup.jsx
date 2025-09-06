@@ -20,7 +20,8 @@ import {
   Chip,
   useTheme,
   Fade,
-  Slide
+  Slide,
+  Divider
 } from '@mui/material';
 import {
   LocalHospital as HospitalIcon,
@@ -38,28 +39,27 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import { Google as GoogleIcon } from '@mui/icons-material';
 
 const Signup = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const { signup } = useAuth();
+  const { signup, signInWithGoogle } = useAuth();
   const [formData, setFormData] = useState({
+    username: '',
     name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
     role: '',
     organization: '',
     phone: ''
   });
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
 
   const roleOptions = [
     { value: 'doctor', label: 'Doctor', icon: <MedicalIcon />, color: '#1976d2' },
     { value: 'ambulance_driver', label: 'Ambulance Driver', icon: <AmbulanceIcon />, color: '#f44336' },
     { value: 'hospital_admin', label: 'Hospital Admin', icon: <HospitalIcon />, color: '#1976d2' },
-    { value: 'nurse', label: 'Nurse', icon: <MedicalIcon />, color: '#42a5f5' },
     { value: 'relief_volunteer', label: 'Relief Volunteer', icon: <VolunteerIcon />, color: '#4caf50' },
     { value: 'ngo', label: 'NGO', icon: <BusinessIcon />, color: '#ff9800' },
     { value: 'logistics_driver', label: 'Logistics Driver', icon: <LogisticsIcon />, color: '#9c27b0' },
@@ -86,16 +86,8 @@ const Signup = () => {
   };
 
   const validateForm = () => {
-    if (!formData.name || !formData.email || !formData.password || !formData.role) {
+    if (!formData.username || !formData.name || !formData.role) {
       setError('Please fill in all required fields');
-      return false;
-    }
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      return false;
-    }
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
       return false;
     }
     return true;
@@ -124,6 +116,21 @@ const Signup = () => {
     }
     
     setLoading(false);
+  };
+
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    setError('');
+
+    const result = await signInWithGoogle();
+    
+    if (result.success) {
+      navigate('/dashboard');
+    } else {
+      setError(result.error);
+    }
+    
+    setGoogleLoading(false);
   };
 
   return (
@@ -295,9 +302,9 @@ const Signup = () => {
                     <Grid item xs={12}>
                       <TextField
                         fullWidth
-                        label="Full Name"
-                        name="name"
-                        value={formData.name}
+                        label="Username"
+                        name="username"
+                        value={formData.username}
                         onChange={handleChange}
                         required
                         sx={{
@@ -326,74 +333,9 @@ const Signup = () => {
                     <Grid item xs={12}>
                       <TextField
                         fullWidth
-                        label="Email Address"
-                        name="email"
-                        type="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        required
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            color: 'white',
-                            '& fieldset': {
-                              borderColor: 'rgba(255, 255, 255, 0.3)',
-                            },
-                            '&:hover fieldset': {
-                              borderColor: 'rgba(25, 118, 210, 0.5)',
-                            },
-                            '&.Mui-focused fieldset': {
-                              borderColor: '#1976d2',
-                            },
-                          },
-                          '& .MuiInputLabel-root': {
-                            color: 'rgba(255, 255, 255, 0.7)',
-                            '&.Mui-focused': {
-                              color: '#1976d2',
-                            },
-                          },
-                        }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="Password"
-                        name="password"
-                        type="password"
-                        value={formData.password}
-                        onChange={handleChange}
-                        required
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            color: 'white',
-                            '& fieldset': {
-                              borderColor: 'rgba(255, 255, 255, 0.3)',
-                            },
-                            '&:hover fieldset': {
-                              borderColor: 'rgba(25, 118, 210, 0.5)',
-                            },
-                            '&.Mui-focused fieldset': {
-                              borderColor: '#1976d2',
-                            },
-                          },
-                          '& .MuiInputLabel-root': {
-                            color: 'rgba(255, 255, 255, 0.7)',
-                            '&.Mui-focused': {
-                              color: '#1976d2',
-                            },
-                          },
-                        }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="Confirm Password"
-                        name="confirmPassword"
-                        type="password"
-                        value={formData.confirmPassword}
+                        label="Full Name"
+                        name="name"
+                        value={formData.name}
                         onChange={handleChange}
                         required
                         sx={{
@@ -491,7 +433,7 @@ const Signup = () => {
                     fullWidth
                     variant="contained"
                     size="large"
-                    disabled={loading || !formData.role}
+                    disabled={loading || googleLoading || !formData.role}
                     startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <PersonAddIcon />}
                     sx={{
                       mt: 3,
@@ -508,6 +450,39 @@ const Signup = () => {
                     }}
                   >
                     {loading ? 'Creating Account...' : 'Create Account'}
+                  </Button>
+
+                  <Box sx={{ display: 'flex', alignItems: 'center', my: 2 }}>
+                    <Divider sx={{ flex: 1, borderColor: 'rgba(255, 255, 255, 0.2)' }} />
+                    <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)', mx: 2 }}>
+                      OR
+                    </Typography>
+                    <Divider sx={{ flex: 1, borderColor: 'rgba(255, 255, 255, 0.2)' }} />
+                  </Box>
+
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    size="large"
+                    disabled={loading || googleLoading}
+                    startIcon={googleLoading ? <CircularProgress size={20} color="inherit" /> : <GoogleIcon />}
+                    onClick={handleGoogleSignIn}
+                    sx={{
+                      mb: 3,
+                      py: 1.5,
+                      borderColor: 'rgba(255, 255, 255, 0.3)',
+                      color: 'white',
+                      '&:hover': {
+                        borderColor: '#1976d2',
+                        backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                      },
+                      '&:disabled': {
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                        color: 'rgba(255, 255, 255, 0.3)',
+                      }
+                    }}
+                  >
+                    {googleLoading ? 'Signing In...' : 'Continue with Google'}
                   </Button>
 
                   <Box sx={{ textAlign: 'center', mt: 3 }}>

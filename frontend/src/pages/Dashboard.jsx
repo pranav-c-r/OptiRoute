@@ -13,10 +13,24 @@ import {
   Zoom,
   Container,
   CircularProgress,
-  Alert
+  Alert,
+  TextField,
+  Switch,
+  FormControlLabel,
+  Chip,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { styled } from '@mui/system';
+import { useAuth } from '../contexts/AuthContext';
 
 // Icons
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
@@ -27,6 +41,14 @@ import AnalyticsIcon from '@mui/icons-material/Analytics';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import GpsFixedIcon from '@mui/icons-material/GpsFixed';
+import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
+import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import MicIcon from '@mui/icons-material/Mic';
+import MicOffIcon from '@mui/icons-material/MicOff';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import PersonIcon from '@mui/icons-material/Person';
+import BedIcon from '@mui/icons-material/Bed';
 
 // Import shared components
 import DashboardCard from '../components/shared/DashboardCard';
@@ -112,6 +134,7 @@ const StyledButton = styled(Button)(({ theme }) => ({
 const Dashboard = () => {
   const theme = useTheme();
   const navigate = useNavigate();
+  const { user, updateUserProfile } = useAuth();
   const [isLoaded, setIsLoaded] = useState(false);
   const [location, setLocation] = useState({
     latitude: null,
@@ -119,6 +142,35 @@ const Dashboard = () => {
     address: null,
     loading: false,
     error: null
+  });
+
+  // Role-specific state
+  const [doctorDialog, setDoctorDialog] = useState(false);
+  const [ambulanceDialog, setAmbulanceDialog] = useState(false);
+  const [hospitalAdminDialog, setHospitalAdminDialog] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recognition, setRecognition] = useState(null);
+
+  // Doctor state
+  const [doctorData, setDoctorData] = useState({
+    hospital: '',
+    hospitalLocation: '',
+    specialization: '',
+    isAvailable: false,
+    nextAvailableTime: ''
+  });
+
+  // Ambulance state
+  const [ambulanceData, setAmbulanceData] = useState({
+    isSevere: false,
+    patientCondition: '',
+    voiceInput: ''
+  });
+
+  // Hospital Admin state
+  const [hospitalAdminData, setHospitalAdminData] = useState({
+    bedsAvailable: 0,
+    doctorsAvailable: []
   });
 
   // Geolocation functionality
@@ -189,11 +241,126 @@ const Dashboard = () => {
     );
   };
 
+  // Voice recognition setup
+  useEffect(() => {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-US';
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        setAmbulanceData(prev => ({ ...prev, voiceInput: transcript }));
+        processVoiceInput(transcript);
+      };
+
+      recognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        setIsRecording(false);
+      };
+
+      recognition.onend = () => {
+        setIsRecording(false);
+      };
+
+      setRecognition(recognition);
+    }
+  }, []);
+
+  // Process voice input with Gemini API
+  const processVoiceInput = async (transcript) => {
+    try {
+      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=AIzaSyAx7eCFzaSrdDjEjEOevX1mCcRpathn7Uo', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: `Analyze this medical emergency description and extract: 1) Severity level (mild/moderate/severe), 2) Patient condition/symptoms. Text: "${transcript}"`
+            }]
+          }]
+        })
+      });
+
+      const data = await response.json();
+      if (data.candidates && data.candidates[0]) {
+        const analysis = data.candidates[0].content.parts[0].text;
+        // Parse the response and update state
+        const isSevere = analysis.toLowerCase().includes('severe');
+        setAmbulanceData(prev => ({
+          ...prev,
+          isSevere,
+          patientCondition: analysis
+        }));
+      }
+    } catch (error) {
+      console.error('Error processing voice input:', error);
+    }
+  };
+
+  const startRecording = () => {
+    if (recognition) {
+      setIsRecording(true);
+      recognition.start();
+    }
+  };
+
+  const stopRecording = () => {
+    if (recognition) {
+      recognition.stop();
+    }
+  };
+
+  // Role-specific handlers
+  const handleDoctorSubmit = async () => {
+    await updateUserProfile(doctorData);
+    setDoctorDialog(false);
+  };
+
+  const handleAmbulanceSubmit = async () => {
+    await updateUserProfile(ambulanceData);
+    setAmbulanceDialog(false);
+  };
+
+  const handleHospitalAdminSubmit = async () => {
+    await updateUserProfile(hospitalAdminData);
+    setHospitalAdminDialog(false);
+  };
+
+  // Store location data in Firebase
+  const storeLocationData = async (locationData) => {
+    if (!user) return;
+    
+    try {
+      await updateUserProfile({
+        location: {
+          latitude: locationData.latitude,
+          longitude: locationData.longitude,
+          address: locationData.address,
+          timestamp: new Date().toISOString()
+        }
+      });
+    } catch (error) {
+      console.error('Error storing location data:', error);
+    }
+  };
+
   useEffect(() => {
     setIsLoaded(true);
     // Automatically get location on component mount
     getCurrentLocation();
   }, []);
+
+  // Store location when it's updated
+  useEffect(() => {
+    if (location.latitude && location.longitude && !location.loading && !location.error) {
+      storeLocationData(location);
+    }
+  }, [location.latitude, location.longitude, location.address]);
 
   // Sample data for overview chart
   const overviewData = {
@@ -310,50 +477,36 @@ const Dashboard = () => {
           </AnimatedBox>
         </Fade>
 
-        {/* Location Display Card */}
+        {/* Compact Location Display */}
         <Fade in={isLoaded} timeout={1000}>
-          <Box sx={{ mb: 4 }}>
-            <GlassPaper sx={{ p: 3, textAlign: 'center' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
-                <LocationOnIcon sx={{ 
-                  fontSize: 32, 
-                  color: '#1976d2', 
-                  mr: 1,
-                  filter: 'drop-shadow(0 0 10px rgba(25, 118, 210, 0.6))'
-                }} />
-                <Typography variant="h5" sx={{ 
-                  color: 'white',
-                  fontWeight: 600
-                }}>
-                  Live Location
-                </Typography>
-              </Box>
-              
-              {location.loading && (
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', py: 2 }}>
-                  <CircularProgress size={24} sx={{ color: '#1976d2', mr: 2 }} />
-                  <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.8)' }}>
-                    Getting your location...
+          <Box sx={{ mb: 3 }}>
+            <GlassPaper sx={{ p: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <LocationOnIcon sx={{ 
+                    fontSize: 20, 
+                    color: '#1976d2', 
+                    mr: 1
+                  }} />
+                  <Typography variant="subtitle1" sx={{ 
+                    color: 'white',
+                    fontWeight: 600
+                  }}>
+                    Current Location
                   </Typography>
                 </Box>
-              )}
-              
-              {location.error && (
-                <Box sx={{ mb: 2 }}>
-                  <Alert severity="error" sx={{ 
-                    backgroundColor: 'rgba(211, 47, 47, 0.1)',
-                    color: '#ff6b6b',
-                    border: '1px solid rgba(211, 47, 47, 0.3)',
-                    '& .MuiAlert-icon': { color: '#ff6b6b' }
-                  }}>
-                    {location.error}
-                  </Alert>
+                
+                {location.loading && (
+                  <CircularProgress size={20} sx={{ color: '#1976d2' }} />
+                )}
+                
+                {location.error && (
                   <Button
+                    size="small"
                     variant="outlined"
                     startIcon={<GpsFixedIcon />}
                     onClick={getCurrentLocation}
                     sx={{
-                      mt: 2,
                       borderColor: '#1976d2',
                       color: '#1976d2',
                       '&:hover': {
@@ -362,91 +515,45 @@ const Dashboard = () => {
                       }
                     }}
                   >
-                    Retry Location
+                    Retry
                   </Button>
-                </Box>
-              )}
+                )}
+              </Box>
               
               {location.latitude && location.longitude && !location.loading && (
-                <Grid container spacing={3} sx={{ mt: 1 }}>
-                  <Grid item xs={12} md={4}>
-                    <Box sx={{ 
-                      p: 2, 
-                      backgroundColor: 'rgba(25, 118, 210, 0.1)',
-                      borderRadius: 2,
-                      border: '1px solid rgba(25, 118, 210, 0.3)'
-                    }}>
-                      <Typography variant="subtitle2" sx={{ color: '#42a5f5', mb: 1 }}>
-                        Latitude
-                      </Typography>
-                      <Typography variant="h6" sx={{ color: 'white', fontFamily: 'monospace' }}>
-                        {location.latitude}°
-                      </Typography>
-                    </Box>
-                  </Grid>
-                  <Grid item xs={12} md={4}>
-                    <Box sx={{ 
-                      p: 2, 
-                      backgroundColor: 'rgba(25, 118, 210, 0.1)',
-                      borderRadius: 2,
-                      border: '1px solid rgba(25, 118, 210, 0.3)'
-                    }}>
-                      <Typography variant="subtitle2" sx={{ color: '#42a5f5', mb: 1 }}>
-                        Longitude
-                      </Typography>
-                      <Typography variant="h6" sx={{ color: 'white', fontFamily: 'monospace' }}>
-                        {location.longitude}°
-                      </Typography>
-                    </Box>
-                  </Grid>
-                  <Grid item xs={12} md={4}>
-                    <Box sx={{ 
-                      p: 2, 
-                      backgroundColor: 'rgba(25, 118, 210, 0.1)',
-                      borderRadius: 2,
-                      border: '1px solid rgba(25, 118, 210, 0.3)'
-                    }}>
-                      <Typography variant="subtitle2" sx={{ color: '#42a5f5', mb: 1 }}>
-                        Accuracy
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: 'white' }}>
-                        GPS-Level
-                      </Typography>
-                    </Box>
-                  </Grid>
+                <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)' }}>
+                    {location.latitude}°, {location.longitude}°
+                  </Typography>
                   {location.address && (
-                    <Grid item xs={12}>
-                      <Box sx={{ 
-                        p: 2, 
-                        backgroundColor: 'rgba(25, 118, 210, 0.1)',
-                        borderRadius: 2,
-                        border: '1px solid rgba(25, 118, 210, 0.3)'
-                      }}>
-                        <Typography variant="subtitle2" sx={{ color: '#42a5f5', mb: 1 }}>
-                          Address
-                        </Typography>
-                        <Typography variant="body1" sx={{ color: 'white', lineHeight: 1.5 }}>
-                          {location.address}
-                        </Typography>
-                      </Box>
-                    </Grid>
+                    <Typography variant="body2" sx={{ 
+                      color: 'rgba(255,255,255,0.6)',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      maxWidth: '300px'
+                    }}>
+                      {location.address}
+                    </Typography>
                   )}
-                </Grid>
+                </Box>
               )}
               
               {!location.loading && !location.error && !location.latitude && (
                 <Button
+                  size="small"
                   variant="contained"
                   startIcon={<GpsFixedIcon />}
                   onClick={getCurrentLocation}
                   sx={{
+                    mt: 1,
                     background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
                     '&:hover': {
                       background: 'linear-gradient(45deg, #1565c0 30%, #1976d2 90%)'
                     }
                   }}
                 >
-                  Get My Location
+                  Get Location
                 </Button>
               )}
             </GlassPaper>
@@ -753,6 +860,273 @@ const Dashboard = () => {
             </Fade>
           </Grid>
         </Grid>
+
+        {/* Role-specific components */}
+        {user?.role === 'doctor' && (
+          <Fade in={isLoaded} timeout={2400}>
+            <Box sx={{ mt: 4 }}>
+              <GlassPaper sx={{ p: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <MedicalServicesIcon sx={{ 
+                    fontSize: 28, 
+                    color: '#1976d2', 
+                    mr: 1 
+                  }} />
+                  <Typography variant="h6" sx={{ color: 'white', fontWeight: 600 }}>
+                    Doctor Profile
+                  </Typography>
+                </Box>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Hospital Name"
+                      value={doctorData.hospital}
+                      onChange={(e) => setDoctorData(prev => ({ ...prev, hospital: e.target.value }))}
+                      sx={{ mb: 2 }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Hospital Location"
+                      value={doctorData.hospitalLocation}
+                      onChange={(e) => setDoctorData(prev => ({ ...prev, hospitalLocation: e.target.value }))}
+                      sx={{ mb: 2 }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Specialization"
+                      value={doctorData.specialization}
+                      onChange={(e) => setDoctorData(prev => ({ ...prev, specialization: e.target.value }))}
+                      sx={{ mb: 2 }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Next Available Time"
+                      type="time"
+                      value={doctorData.nextAvailableTime}
+                      onChange={(e) => setDoctorData(prev => ({ ...prev, nextAvailableTime: e.target.value }))}
+                      InputLabelProps={{ shrink: true }}
+                      sx={{ mb: 2 }}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={doctorData.isAvailable}
+                          onChange={(e) => setDoctorData(prev => ({ ...prev, isAvailable: e.target.checked }))}
+                          color="primary"
+                        />
+                      }
+                      label={
+                        <Typography sx={{ color: 'white' }}>
+                          Currently Available
+                        </Typography>
+                      }
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Button
+                      variant="contained"
+                      onClick={handleDoctorSubmit}
+                      sx={{
+                        background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                        '&:hover': {
+                          background: 'linear-gradient(45deg, #1565c0 30%, #1976d2 90%)'
+                        }
+                      }}
+                    >
+                      Update Profile
+                    </Button>
+                  </Grid>
+                </Grid>
+              </GlassPaper>
+            </Box>
+          </Fade>
+        )}
+
+        {user?.role === 'ambulance_driver' && (
+          <Fade in={isLoaded} timeout={2400}>
+            <Box sx={{ mt: 4 }}>
+              <GlassPaper sx={{ p: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <DirectionsCarIcon sx={{ 
+                    fontSize: 28, 
+                    color: '#f44336', 
+                    mr: 1 
+                  }} />
+                  <Typography variant="h6" sx={{ color: 'white', fontWeight: 600 }}>
+                    Emergency Case Details
+                  </Typography>
+                </Box>
+                <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={ambulanceData.isSevere}
+                          onChange={(e) => setAmbulanceData(prev => ({ ...prev, isSevere: e.target.checked }))}
+                          color="error"
+                        />
+                      }
+                      label={
+                        <Typography sx={{ color: 'white' }}>
+                          Severe Case
+                        </Typography>
+                      }
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Patient Condition"
+                      multiline
+                      rows={3}
+                      value={ambulanceData.patientCondition}
+                      onChange={(e) => setAmbulanceData(prev => ({ ...prev, patientCondition: e.target.value }))}
+                      sx={{ mb: 2 }}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                      <TextField
+                        fullWidth
+                        label="Voice Input"
+                        multiline
+                        rows={2}
+                        value={ambulanceData.voiceInput}
+                        onChange={(e) => setAmbulanceData(prev => ({ ...prev, voiceInput: e.target.value }))}
+                      />
+                      <IconButton
+                        onClick={isRecording ? stopRecording : startRecording}
+                        sx={{
+                          backgroundColor: isRecording ? '#f44336' : '#1976d2',
+                          color: 'white',
+                          '&:hover': {
+                            backgroundColor: isRecording ? '#d32f2f' : '#1565c0'
+                          }
+                        }}
+                      >
+                        {isRecording ? <MicOffIcon /> : <MicIcon />}
+                      </IconButton>
+                    </Box>
+                    <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', mb: 2 }}>
+                      Click the microphone to record patient details
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Button
+                      variant="contained"
+                      onClick={handleAmbulanceSubmit}
+                      sx={{
+                        background: 'linear-gradient(45deg, #f44336 30%, #ff5722 90%)',
+                        '&:hover': {
+                          background: 'linear-gradient(45deg, #d32f2f 30%, #f44336 90%)'
+                        }
+                      }}
+                    >
+                      Submit Case Details
+                    </Button>
+                  </Grid>
+                </Grid>
+              </GlassPaper>
+            </Box>
+          </Fade>
+        )}
+
+        {user?.role === 'hospital_admin' && (
+          <Fade in={isLoaded} timeout={2400}>
+            <Box sx={{ mt: 4 }}>
+              <GlassPaper sx={{ p: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <AdminPanelSettingsIcon sx={{ 
+                    fontSize: 28, 
+                    color: '#1976d2', 
+                    mr: 1 
+                  }} />
+                  <Typography variant="h6" sx={{ color: 'white', fontWeight: 600 }}>
+                    Hospital Resource Management
+                  </Typography>
+                </Box>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Beds Available"
+                      type="number"
+                      value={hospitalAdminData.bedsAvailable}
+                      onChange={(e) => setHospitalAdminData(prev => ({ ...prev, bedsAvailable: parseInt(e.target.value) || 0 }))}
+                      sx={{ mb: 2 }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Add Doctor Specialization"
+                      placeholder="e.g., Cardiology, Neurology"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter' && e.target.value.trim()) {
+                          setHospitalAdminData(prev => ({
+                            ...prev,
+                            doctorsAvailable: [...prev.doctorsAvailable, e.target.value.trim()]
+                          }));
+                          e.target.value = '';
+                        }
+                      }}
+                      sx={{ mb: 2 }}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle2" sx={{ color: '#42a5f5', mb: 1 }}>
+                      Available Doctors by Specialization:
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      {hospitalAdminData.doctorsAvailable.map((specialization, index) => (
+                        <Chip
+                          key={index}
+                          label={specialization}
+                          onDelete={() => {
+                            setHospitalAdminData(prev => ({
+                              ...prev,
+                              doctorsAvailable: prev.doctorsAvailable.filter((_, i) => i !== index)
+                            }));
+                          }}
+                          sx={{
+                            backgroundColor: 'rgba(25, 118, 210, 0.2)',
+                            color: 'white',
+                            '& .MuiChip-deleteIcon': {
+                              color: 'rgba(255,255,255,0.7)'
+                            }
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Button
+                      variant="contained"
+                      onClick={handleHospitalAdminSubmit}
+                      sx={{
+                        background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                        '&:hover': {
+                          background: 'linear-gradient(45deg, #1565c0 30%, #1976d2 90%)'
+                        }
+                      }}
+                    >
+                      Update Hospital Resources
+                    </Button>
+                  </Grid>
+                </Grid>
+              </GlassPaper>
+            </Box>
+          </Fade>
+        )}
       </Container>
     </Box>
   );

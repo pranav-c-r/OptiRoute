@@ -11,7 +11,9 @@ import {
   Fade,
   Slide,
   Zoom,
-  Container
+  Container,
+  CircularProgress,
+  Alert
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { styled } from '@mui/system';
@@ -23,6 +25,8 @@ import RestaurantIcon from '@mui/icons-material/Restaurant';
 import HomeIcon from '@mui/icons-material/Home';
 import AnalyticsIcon from '@mui/icons-material/Analytics';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 
 // Import shared components
 import DashboardCard from '../components/shared/DashboardCard';
@@ -109,9 +113,86 @@ const Dashboard = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const [isLoaded, setIsLoaded] = useState(false);
+  const [location, setLocation] = useState({
+    latitude: null,
+    longitude: null,
+    address: null,
+    loading: false,
+    error: null
+  });
+
+  // Geolocation functionality
+  const getCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setLocation(prev => ({
+        ...prev,
+        error: 'Geolocation is not supported by this browser.',
+        loading: false
+      }));
+      return;
+    }
+
+    setLocation(prev => ({ ...prev, loading: true, error: null }));
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        
+        try {
+          // Reverse geocoding using a free service (nominatim)
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`
+          );
+          const data = await response.json();
+          
+          setLocation({
+            latitude: latitude.toFixed(6),
+            longitude: longitude.toFixed(6),
+            address: data.display_name || 'Address not found',
+            loading: false,
+            error: null
+          });
+        } catch (error) {
+          setLocation({
+            latitude: latitude.toFixed(6),
+            longitude: longitude.toFixed(6),
+            address: 'Unable to fetch address',
+            loading: false,
+            error: null
+          });
+        }
+      },
+      (error) => {
+        let errorMessage = 'Unable to retrieve location.';
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = 'Location access denied by user.';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = 'Location information is unavailable.';
+            break;
+          case error.TIMEOUT:
+            errorMessage = 'Location request timed out.';
+            break;
+        }
+        setLocation(prev => ({
+          ...prev,
+          loading: false,
+          error: errorMessage
+        }));
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000
+      }
+    );
+  };
 
   useEffect(() => {
     setIsLoaded(true);
+    // Automatically get location on component mount
+    getCurrentLocation();
   }, []);
 
   // Sample data for overview chart
@@ -227,6 +308,149 @@ const Dashboard = () => {
               OptiRoute Dashboard
             </Typography>
           </AnimatedBox>
+        </Fade>
+
+        {/* Location Display Card */}
+        <Fade in={isLoaded} timeout={1000}>
+          <Box sx={{ mb: 4 }}>
+            <GlassPaper sx={{ p: 3, textAlign: 'center' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
+                <LocationOnIcon sx={{ 
+                  fontSize: 32, 
+                  color: '#1976d2', 
+                  mr: 1,
+                  filter: 'drop-shadow(0 0 10px rgba(25, 118, 210, 0.6))'
+                }} />
+                <Typography variant="h5" sx={{ 
+                  color: 'white',
+                  fontWeight: 600
+                }}>
+                  Live Location
+                </Typography>
+              </Box>
+              
+              {location.loading && (
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', py: 2 }}>
+                  <CircularProgress size={24} sx={{ color: '#1976d2', mr: 2 }} />
+                  <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.8)' }}>
+                    Getting your location...
+                  </Typography>
+                </Box>
+              )}
+              
+              {location.error && (
+                <Box sx={{ mb: 2 }}>
+                  <Alert severity="error" sx={{ 
+                    backgroundColor: 'rgba(211, 47, 47, 0.1)',
+                    color: '#ff6b6b',
+                    border: '1px solid rgba(211, 47, 47, 0.3)',
+                    '& .MuiAlert-icon': { color: '#ff6b6b' }
+                  }}>
+                    {location.error}
+                  </Alert>
+                  <Button
+                    variant="outlined"
+                    startIcon={<GpsFixedIcon />}
+                    onClick={getCurrentLocation}
+                    sx={{
+                      mt: 2,
+                      borderColor: '#1976d2',
+                      color: '#1976d2',
+                      '&:hover': {
+                        borderColor: '#42a5f5',
+                        backgroundColor: 'rgba(25, 118, 210, 0.1)'
+                      }
+                    }}
+                  >
+                    Retry Location
+                  </Button>
+                </Box>
+              )}
+              
+              {location.latitude && location.longitude && !location.loading && (
+                <Grid container spacing={3} sx={{ mt: 1 }}>
+                  <Grid item xs={12} md={4}>
+                    <Box sx={{ 
+                      p: 2, 
+                      backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                      borderRadius: 2,
+                      border: '1px solid rgba(25, 118, 210, 0.3)'
+                    }}>
+                      <Typography variant="subtitle2" sx={{ color: '#42a5f5', mb: 1 }}>
+                        Latitude
+                      </Typography>
+                      <Typography variant="h6" sx={{ color: 'white', fontFamily: 'monospace' }}>
+                        {location.latitude}°
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <Box sx={{ 
+                      p: 2, 
+                      backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                      borderRadius: 2,
+                      border: '1px solid rgba(25, 118, 210, 0.3)'
+                    }}>
+                      <Typography variant="subtitle2" sx={{ color: '#42a5f5', mb: 1 }}>
+                        Longitude
+                      </Typography>
+                      <Typography variant="h6" sx={{ color: 'white', fontFamily: 'monospace' }}>
+                        {location.longitude}°
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <Box sx={{ 
+                      p: 2, 
+                      backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                      borderRadius: 2,
+                      border: '1px solid rgba(25, 118, 210, 0.3)'
+                    }}>
+                      <Typography variant="subtitle2" sx={{ color: '#42a5f5', mb: 1 }}>
+                        Accuracy
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: 'white' }}>
+                        GPS-Level
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  {location.address && (
+                    <Grid item xs={12}>
+                      <Box sx={{ 
+                        p: 2, 
+                        backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                        borderRadius: 2,
+                        border: '1px solid rgba(25, 118, 210, 0.3)'
+                      }}>
+                        <Typography variant="subtitle2" sx={{ color: '#42a5f5', mb: 1 }}>
+                          Address
+                        </Typography>
+                        <Typography variant="body1" sx={{ color: 'white', lineHeight: 1.5 }}>
+                          {location.address}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                  )}
+                </Grid>
+              )}
+              
+              {!location.loading && !location.error && !location.latitude && (
+                <Button
+                  variant="contained"
+                  startIcon={<GpsFixedIcon />}
+                  onClick={getCurrentLocation}
+                  sx={{
+                    background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                    '&:hover': {
+                      background: 'linear-gradient(45deg, #1565c0 30%, #1976d2 90%)'
+                    }
+                  }}
+                >
+                  Get My Location
+                </Button>
+              )}
+            </GlassPaper>
+          </Box>
         </Fade>
 
         <Grid container spacing={4}>

@@ -38,6 +38,8 @@ import DataTable from '../components/shared/DataTable';
 
 // Import API service
 import { wasteOptimizerAPI, handleApiError } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
+import { addFarmerInfoToFirebase, addWarehouseInfoToFirebase, addLogisticsInfoToFirebase } from '../services/api';
 
 const HungerWasteOptimizer = () => {
   const theme = useTheme();
@@ -64,6 +66,15 @@ const HungerWasteOptimizer = () => {
   });
   const [generatedPlan, setGeneratedPlan] = useState(null);
   const [generating, setGenerating] = useState(false);
+
+  // Role-based forms
+  const { user, role } = useAuth();
+  const [farmerForm, setFarmerForm] = useState({ crop: '', quantity: '', location: '', economic_status: '' });
+  const [warehouseForm, setWarehouseForm] = useState({ available_kg: '', temperature: '', cost_per_day_per_kg: '' });
+  const [logisticsForm, setLogisticsForm] = useState({ vehicle_type: '', location: '', capacity_kg: '', status: '' });
+  const [farmerSubmitting, setFarmerSubmitting] = useState(false);
+  const [warehouseSubmitting, setWarehouseSubmitting] = useState(false);
+  const [logisticsSubmitting, setLogisticsSubmitting] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -240,6 +251,39 @@ const HungerWasteOptimizer = () => {
     status: logistic.status,
     cost_per_km: `₹${logistic.cost_per_km}`
   }));
+
+  // Farmer form handlers
+  const handleFarmerFormChange = (e) => {
+    setFarmerForm({ ...farmerForm, [e.target.name]: e.target.value });
+  };
+  const handleFarmerFormSubmit = async (e) => {
+    e.preventDefault();
+    setFarmerSubmitting(true);
+    await addFarmerInfoToFirebase(user.uid, farmerForm);
+    setFarmerSubmitting(false);
+  };
+
+  // Warehouse form handlers
+  const handleWarehouseFormChange = (e) => {
+    setWarehouseForm({ ...warehouseForm, [e.target.name]: e.target.value });
+  };
+  const handleWarehouseFormSubmit = async (e) => {
+    e.preventDefault();
+    setWarehouseSubmitting(true);
+    await addWarehouseInfoToFirebase(user.uid, warehouseForm);
+    setWarehouseSubmitting(false);
+  };
+
+  // Logistics form handlers
+  const handleLogisticsFormChange = (e) => {
+    setLogisticsForm({ ...logisticsForm, [e.target.name]: e.target.value });
+  };
+  const handleLogisticsFormSubmit = async (e) => {
+    e.preventDefault();
+    setLogisticsSubmitting(true);
+    await addLogisticsInfoToFirebase(user.uid, logisticsForm);
+    setLogisticsSubmitting(false);
+  };
 
   return (
     <Box sx={{ 
@@ -772,8 +816,199 @@ const HungerWasteOptimizer = () => {
               </Paper>
             </Fade>
           </Grid>
+
+          {/* Inventory Table */}
+          <Grid item xs={12} md={6}>
+            <Fade in={isLoaded} timeout={2600}>
+              <Paper sx={{ p: 3, background: 'rgba(39, 62, 107, 0.8)', borderRadius: 3, boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
+                <Typography variant="h6" sx={{ fontWeight: 600, background: 'linear-gradient(45deg, #1976d2, #42a5f5)', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontFamily: 'Poppins', mb: 2 }}>
+                  Inventory
+                </Typography>
+                <DataTable
+                  rows={inventory.map((item, idx) => ({
+                    id: item.id || idx,
+                    location: item.location,
+                    item: item.item,
+                    quantity: item.quantity,
+                    perishability: item.perishability,
+                    price: item.price_per_kg || item.price_per_l,
+                    farmer_id: item.farmer_id
+                  }))}
+                  columns={[
+                    { field: 'location', headerName: 'Location', width: 180 },
+                    { field: 'item', headerName: 'Item', width: 120 },
+                    { field: 'quantity', headerName: 'Quantity', width: 120 },
+                    { field: 'perishability', headerName: 'Perishability', width: 120 },
+                    { field: 'price', headerName: 'Price', width: 100 },
+                    { field: 'farmer_id', headerName: 'Farmer ID', width: 120 }
+                  ]}
+                  pageSize={5}
+                />
+              </Paper>
+            </Fade>
+          </Grid>
+
+          {/* Demand Table */}
+          <Grid item xs={12} md={6}>
+            <Fade in={isLoaded} timeout={2700}>
+              <Paper sx={{ p: 3, background: 'rgba(39, 62, 107, 0.8)', borderRadius: 3, boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
+                <Typography variant="h6" sx={{ fontWeight: 600, background: 'linear-gradient(45deg, #1976d2, #42a5f5)', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontFamily: 'Poppins', mb: 2 }}>
+                  Demand
+                </Typography>
+                <DataTable
+                  rows={demand.map((d, idx) => ({
+                    id: d.id || idx,
+                    location: d.location,
+                    needs: d.needs.join(', '),
+                    urgency: d.urgency,
+                    capacity_kg: d.capacity_kg,
+                    population_served: d.population_served,
+                    last_delivery: d.last_delivery
+                  }))}
+                  columns={[
+                    { field: 'location', headerName: 'Location', width: 180 },
+                    { field: 'needs', headerName: 'Needs', width: 180 },
+                    { field: 'urgency', headerName: 'Urgency', width: 100 },
+                    { field: 'capacity_kg', headerName: 'Capacity (kg)', width: 120 },
+                    { field: 'population_served', headerName: 'Population', width: 120 },
+                    { field: 'last_delivery', headerName: 'Last Delivery', width: 140 }
+                  ]}
+                  pageSize={5}
+                />
+              </Paper>
+            </Fade>
+          </Grid>
+
+          {/* Storage Table */}
+          <Grid item xs={12} md={6}>
+            <Fade in={isLoaded} timeout={2800}>
+              <Paper sx={{ p: 3, background: 'rgba(39, 62, 107, 0.8)', borderRadius: 3, boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
+                <Typography variant="h6" sx={{ fontWeight: 600, background: 'linear-gradient(45deg, #1976d2, #42a5f5)', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontFamily: 'Poppins', mb: 2 }}>
+                  Storage Facilities
+                </Typography>
+                <DataTable
+                  rows={storage.map((s, idx) => ({
+                    id: s.id || idx,
+                    location: s.location,
+                    capacity_kg: s.capacity_kg,
+                    available_kg: s.available_kg,
+                    temperature: s.temperature,
+                    cost_per_day_per_kg: s.cost_per_day_per_kg
+                  }))}
+                  columns={[
+                    { field: 'location', headerName: 'Location', width: 180 },
+                    { field: 'capacity_kg', headerName: 'Capacity (kg)', width: 120 },
+                    { field: 'available_kg', headerName: 'Available (kg)', width: 120 },
+                    { field: 'temperature', headerName: 'Temperature', width: 120 },
+                    { field: 'cost_per_day_per_kg', headerName: 'Cost/Day/Kg', width: 120 }
+                  ]}
+                  pageSize={5}
+                />
+              </Paper>
+            </Fade>
+          </Grid>
+
+          {/* Farmers Table */}
+          <Grid item xs={12} md={6}>
+            <Fade in={isLoaded} timeout={2900}>
+              <Paper sx={{ p: 3, background: 'rgba(39, 62, 107, 0.8)', borderRadius: 3, boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
+                <Typography variant="h6" sx={{ fontWeight: 600, background: 'linear-gradient(45deg, #1976d2, #42a5f5)', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontFamily: 'Poppins', mb: 2 }}>
+                  Farmers
+                </Typography>
+                <DataTable
+                  rows={Object.entries(farmers).map(([id, f], idx) => ({
+                    id,
+                    name: f.name,
+                    location: f.location,
+                    years_farming: f.years_farming,
+                    economic_status: f.economic_status,
+                    last_month_income: f.last_month_income
+                  }))}
+                  columns={[
+                    { field: 'name', headerName: 'Name', width: 140 },
+                    { field: 'location', headerName: 'Location', width: 120 },
+                    { field: 'years_farming', headerName: 'Years Farming', width: 120 },
+                    { field: 'economic_status', headerName: 'Status', width: 120 },
+                    { field: 'last_month_income', headerName: 'Last Month Income', width: 140 }
+                  ]}
+                  pageSize={5}
+                />
+              </Paper>
+            </Fade>
+          </Grid>
         </Grid>
       </Container>
+
+      {/* Role-based forms */}
+      {role === 'farmer' && (
+        <Paper sx={{ p: 3, mb: 3, background: 'rgba(39,62,107,0.8)', borderRadius: 3 }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Farmer Profile</Typography>
+          <form onSubmit={handleFarmerFormSubmit}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={3}>
+                <TextField label="Crop Type" name="crop" value={farmerForm.crop} onChange={handleFarmerFormChange} fullWidth required />
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <TextField label="Quantity (kg)" name="quantity" value={farmerForm.quantity} onChange={handleFarmerFormChange} fullWidth required type="number" />
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <TextField label="Location" name="location" value={farmerForm.location} onChange={handleFarmerFormChange} fullWidth required />
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <TextField label="Economic Status" name="economic_status" value={farmerForm.economic_status} onChange={handleFarmerFormChange} fullWidth required />
+              </Grid>
+              <Grid item xs={12}>
+                <Button type="submit" variant="contained" disabled={farmerSubmitting}>{farmerSubmitting ? 'Saving...' : 'Save'}</Button>
+              </Grid>
+            </Grid>
+          </form>
+        </Paper>
+      )}
+      {role === 'warehouse_manager' && (
+        <Paper sx={{ p: 3, mb: 3, background: 'rgba(39,62,107,0.8)', borderRadius: 3 }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Warehouse Manager Panel</Typography>
+          <form onSubmit={handleWarehouseFormSubmit}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={4}>
+                <TextField label="Available (kg)" name="available_kg" value={warehouseForm.available_kg} onChange={handleWarehouseFormChange} fullWidth required type="number" />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <TextField label="Temperature (°C)" name="temperature" value={warehouseForm.temperature} onChange={handleWarehouseFormChange} fullWidth required type="number" />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <TextField label="Cost/Day/Kg" name="cost_per_day_per_kg" value={warehouseForm.cost_per_day_per_kg} onChange={handleWarehouseFormChange} fullWidth required type="number" />
+              </Grid>
+              <Grid item xs={12}>
+                <Button type="submit" variant="contained" disabled={warehouseSubmitting}>{warehouseSubmitting ? 'Saving...' : 'Save'}</Button>
+              </Grid>
+            </Grid>
+          </form>
+        </Paper>
+      )}
+      {role === 'logistics_driver' && (
+        <Paper sx={{ p: 3, mb: 3, background: 'rgba(39,62,107,0.8)', borderRadius: 3 }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Logistics Driver Panel</Typography>
+          <form onSubmit={handleLogisticsFormSubmit}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={3}>
+                <TextField label="Vehicle Type" name="vehicle_type" value={logisticsForm.vehicle_type} onChange={handleLogisticsFormChange} fullWidth required />
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <TextField label="Location" name="location" value={logisticsForm.location} onChange={handleLogisticsFormChange} fullWidth required />
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <TextField label="Capacity (kg)" name="capacity_kg" value={logisticsForm.capacity_kg} onChange={handleLogisticsFormChange} fullWidth required type="number" />
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <TextField label="Status" name="status" value={logisticsForm.status} onChange={handleLogisticsFormChange} fullWidth required />
+              </Grid>
+              <Grid item xs={12}>
+                <Button type="submit" variant="contained" disabled={logisticsSubmitting}>{logisticsSubmitting ? 'Saving...' : 'Save'}</Button>
+              </Grid>
+            </Grid>
+          </form>
+        </Paper>
+      )}
 
       {/* AI Plan Generation Dialog */}
       <Dialog open={openPlanDialog} onClose={() => setOpenPlanDialog(false)} maxWidth="lg" fullWidth>

@@ -38,6 +38,8 @@ import DataTable from '../components/shared/DataTable';
 
 // Import API service
 import { hospitalAPI, handleApiError } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
+import { addDoctorInfoToFirebase, addHospitalInfoToFirebase } from '../services/api';
 
 const HospitalResourceOptimizer = () => {
   const theme = useTheme();
@@ -62,6 +64,13 @@ const HospitalResourceOptimizer = () => {
   });
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
+
+  // Doctor and Hospital Admin Forms
+  const { user, role } = useAuth();
+  const [doctorForm, setDoctorForm] = useState({ specialization: '', freeTime: '' });
+  const [hospitalForm, setHospitalForm] = useState({ beds: '', doctors: '', specializations: '' });
+  const [doctorSubmitting, setDoctorSubmitting] = useState(false);
+  const [hospitalSubmitting, setHospitalSubmitting] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -260,6 +269,28 @@ const HospitalResourceOptimizer = () => {
     };
   });
 
+  // Handlers for doctor form
+  const handleDoctorFormChange = (e) => {
+    setDoctorForm({ ...doctorForm, [e.target.name]: e.target.value });
+  };
+  const handleDoctorFormSubmit = async (e) => {
+    e.preventDefault();
+    setDoctorSubmitting(true);
+    await addDoctorInfoToFirebase(user.uid, doctorForm);
+    setDoctorSubmitting(false);
+  };
+
+  // Handlers for hospital admin form
+  const handleHospitalFormChange = (e) => {
+    setHospitalForm({ ...hospitalForm, [e.target.name]: e.target.value });
+  };
+  const handleHospitalFormSubmit = async (e) => {
+    e.preventDefault();
+    setHospitalSubmitting(true);
+    await addHospitalInfoToFirebase(user.uid, hospitalForm);
+    setHospitalSubmitting(false);
+  };
+
   return (
     <Box sx={{ 
       p: 3,
@@ -357,6 +388,47 @@ const HospitalResourceOptimizer = () => {
             )}
           </Box>
         </Fade>
+
+        {/* Role-based forms */}
+        {role === 'doctor' && (
+          <Paper sx={{ p: 3, mb: 3, background: 'rgba(39,62,107,0.8)', borderRadius: 3 }}>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Doctor Profile</Typography>
+            <form onSubmit={handleDoctorFormSubmit}>
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={6}>
+                  <TextField label="Specialization" name="specialization" value={doctorForm.specialization} onChange={handleDoctorFormChange} fullWidth required />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField label="Free Time (e.g. 2pm-4pm)" name="freeTime" value={doctorForm.freeTime} onChange={handleDoctorFormChange} fullWidth required />
+                </Grid>
+                <Grid item xs={12}>
+                  <Button type="submit" variant="contained" disabled={doctorSubmitting}>{doctorSubmitting ? 'Saving...' : 'Save'}</Button>
+                </Grid>
+              </Grid>
+            </form>
+          </Paper>
+        )}
+        {role === 'hospital_admin' && (
+          <Paper sx={{ p: 3, mb: 3, background: 'rgba(39,62,107,0.8)', borderRadius: 3 }}>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Hospital Admin Panel</Typography>
+            <form onSubmit={handleHospitalFormSubmit}>
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={4}>
+                  <TextField label="Available Beds" name="beds" value={hospitalForm.beds} onChange={handleHospitalFormChange} fullWidth required type="number" />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField label="Available Doctors" name="doctors" value={hospitalForm.doctors} onChange={handleHospitalFormChange} fullWidth required type="number" />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField label="Doctor Specializations" name="specializations" value={hospitalForm.specializations} onChange={handleHospitalFormChange} fullWidth required />
+                </Grid>
+                <Grid item xs={12}>
+                  <Button type="submit" variant="contained" disabled={hospitalSubmitting}>{hospitalSubmitting ? 'Saving...' : 'Save'}</Button>
+                </Grid>
+              </Grid>
+            </form>
+          </Paper>
+        )}
 
         <Grid container spacing={4}>
           {/* Feature cards */}

@@ -13,9 +13,47 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     return <Navigate to="/login" replace />;
   }
 
-  // Check role-based access if allowedRoles is specified
-  if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/dashboard" replace />;
+  // If allowedRoles is specified and user role is not allowed, show access denied with current role
+  if (
+    allowedRoles.length > 0 &&
+    !allowedRoles.includes(user.role)
+  ) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '60vh',
+          color: '#f44336',
+          fontFamily: 'Poppins',
+          fontSize: '1.5rem',
+          fontWeight: 600,
+        }}
+      >
+        Access Denied
+        <br />
+        <span
+          style={{
+            fontSize: '1rem',
+            color: '#888',
+            marginTop: 8,
+          }}
+        >
+          You do not have permission to view this page.
+          <br />
+          <span
+            style={{
+              color: '#1976d2',
+              fontWeight: 500,
+            }}
+          >
+            Current Role: {user.role}
+          </span>
+        </span>
+      </div>
+    );
   }
 
   return children;

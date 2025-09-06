@@ -53,9 +53,8 @@ function App() {
               </ProtectedRoute>
             } />
             
-            {/* All authenticated users can access all pages */}
             <Route path="/hospital-optimizer" element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={["hospital_admin", "doctor", "ambulance_driver"]}>
                 <Layout>
                   <HospitalResourceOptimizer />
                 </Layout>
@@ -63,7 +62,7 @@ function App() {
             } />
             
             <Route path="/disaster-relief" element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={["logistics_driver", "ngo"]}>
                 <Layout>
                   <DisasterReliefOptimizer />
                 </Layout>
@@ -71,7 +70,7 @@ function App() {
             } />
             
             <Route path="/hunger-waste" element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={["farmer", "logistics_driver", "ngo", "warehouse_manager"]}>
                 <Layout>
                   <HungerWasteOptimizer />
                 </Layout>
@@ -79,7 +78,7 @@ function App() {
             } />
             
             <Route path="/shelter-allocation" element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={["ngo", "landlord", "shelter_manager", "housing_authority"]}>
                 <Layout>
                   <SmartShelterAllocation />
                 </Layout>
@@ -88,7 +87,7 @@ function App() {
             
             {/* Role-specific routes */}
             <Route path="/doctor-dashboard" element={
-              <ProtectedRoute allowedRoles={['doctor']}>
+              <ProtectedRoute allowedRoles={["doctor"]}>
                 <Layout>
                   <DoctorDashboard />
                 </Layout>
@@ -96,7 +95,7 @@ function App() {
             } />
             
             <Route path="/hospital-admin" element={
-              <ProtectedRoute allowedRoles={['hospital_admin']}>
+              <ProtectedRoute allowedRoles={["hospital_admin"]}>
                 <Layout>
                   <HospitalAdminDashboard />
                 </Layout>

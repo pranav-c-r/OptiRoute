@@ -376,3 +376,94 @@ async def get_inventory():
 async def get_demand():
     """Returns current demand details."""
     return SIMULATED_DEMANDS
+
+# --- Additional Management Endpoints ---
+@router.get("/logistics")
+async def get_logistics():
+    """Returns current logistics details."""
+    return SIMULATED_LOGISTICS
+
+@router.get("/storage")
+async def get_storage():
+    """Returns current storage details."""
+    return SIMULATED_STORAGE
+
+@router.get("/farmers")
+async def get_farmers():
+    """Returns farmer information."""
+    farmers = {
+        "F1001": {"name": "Raj Kumar", "location": "Chennai", "years_farming": 12, 
+                 "economic_status": "struggling", "last_month_income": 15000},
+        "F1002": {"name": "Vijay Singh", "location": "Kanchipuram", "years_farming": 8, 
+                 "economic_status": "moderate", "last_month_income": 25000},
+        "F1003": {"name": "Priya Patel", "location": "Vellore", "years_farming": 5, 
+                 "economic_status": "struggling", "last_month_income": 12000},
+        "D2001": {"name": "Milk Cooperative", "location": "Chennai", "years_farming": 20, 
+                 "economic_status": "stable", "last_month_income": 80000},
+        "F3001": {"name": "Fisherman Cooperative", "location": "Chennai Coast", "years_farming": 15, 
+                 "economic_status": "moderate", "last_month_income": 45000},
+    }
+    return farmers
+
+@router.get("/dashboard/stats")
+async def get_waste_optimizer_stats():
+    """Returns dashboard statistics for waste optimizer."""
+    total_inventory = sum([int(item['quantity'].replace('kg', '').replace('L', '')) for item in SIMULATED_INVENTORY])
+    total_demand = sum([demand['capacity_kg'] for demand in SIMULATED_DEMANDS])
+    available_vehicles = len([v for v in SIMULATED_LOGISTICS if v["status"] == "available"])
+    total_storage = sum([s['available_kg'] for s in SIMULATED_STORAGE])
+    
+    return {
+        "total_inventory_kg": total_inventory,
+        "total_demand_capacity": total_demand,
+        "utilization_rate": round(total_inventory / total_demand * 100, 2) if total_demand > 0 else 0,
+        "available_vehicles": available_vehicles,
+        "total_vehicles": len(SIMULATED_LOGISTICS),
+        "available_storage_kg": total_storage,
+        "total_storage_capacity": sum([s['capacity_kg'] for s in SIMULATED_STORAGE]),
+        "last_updated": datetime.now().isoformat()
+    }
+
+@router.get("/dashboard/inventory-flow")
+async def get_inventory_flow():
+    """Returns inventory flow data for charts."""
+    # Simulate weekly data
+    days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+    food_in = [2500, 3200, 2800, 3500, 4000, 1800, 2200]
+    food_out = [2200, 2800, 2600, 3000, 3500, 1600, 2000]
+    waste = [150, 200, 120, 180, 220, 100, 130]
+    
+    return {
+        "days": days,
+        "food_in": food_in,
+        "food_out": food_out,
+        "waste": waste
+    }
+
+@router.get("/dashboard/network-status")
+async def get_network_status():
+    """Returns food bank network status."""
+    locations = ['Central Food Bank', 'North Branch', 'South Hub', 'East Center', 'West Station']
+    current_inventory = [2500, 1800, 2200, 1600, 2000]
+    daily_distribution = [800, 600, 700, 500, 650]
+    surplus_available = [300, 200, 250, 150, 180]
+    
+    return {
+        "locations": locations,
+        "current_inventory": current_inventory,
+        "daily_distribution": daily_distribution,
+        "surplus_available": surplus_available
+    }
+
+@router.get("/dashboard/waste-reduction")
+async def get_waste_reduction():
+    """Returns waste reduction data by category."""
+    categories = ['Vegetables', 'Fruits', 'Dairy', 'Meat', 'Bakery', 'Prepared Meals']
+    waste_before = [150, 120, 80, 60, 90, 110]
+    waste_after = [45, 36, 24, 18, 27, 33]
+    
+    return {
+        "categories": categories,
+        "waste_before": waste_before,
+        "waste_after": waste_after
+    }

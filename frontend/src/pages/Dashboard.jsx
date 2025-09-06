@@ -33,22 +33,24 @@ import { styled } from '@mui/system';
 import { useAuth } from '../contexts/AuthContext';
 
 // Icons
-import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
-import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
-import RestaurantIcon from '@mui/icons-material/Restaurant';
-import HomeIcon from '@mui/icons-material/Home';
-import AnalyticsIcon from '@mui/icons-material/Analytics';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import GpsFixedIcon from '@mui/icons-material/GpsFixed';
-import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
-import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
-import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
-import MicIcon from '@mui/icons-material/Mic';
-import MicOffIcon from '@mui/icons-material/MicOff';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import PersonIcon from '@mui/icons-material/Person';
-import BedIcon from '@mui/icons-material/Bed';
+import {
+  LocalHospital as LocalHospitalIcon,
+  VolunteerActivism as VolunteerActivismIcon,
+  Restaurant as RestaurantIcon,
+  Home as HomeIcon,
+  Analytics as AnalyticsIcon,
+  TrendingUp as TrendingUpIcon,
+  LocationOn as LocationOnIcon,
+  GpsFixed as GpsFixedIcon,
+  MedicalServices as MedicalServicesIcon,
+  DirectionsCar as DirectionsCarIcon,
+  AdminPanelSettings as AdminPanelSettingsIcon,
+  Mic as MicIcon,
+  MicOff as MicOffIcon,
+  AccessTime as AccessTimeIcon,
+  Person as PersonIcon,
+  Bed as BedIcon
+} from '@mui/icons-material';
 
 // Import shared components
 import DashboardCard from '../components/shared/DashboardCard';

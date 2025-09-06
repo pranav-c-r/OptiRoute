@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -11,6 +11,10 @@ import {
   IconButton,
   Tooltip,
   Divider,
+  Fade,
+  Slide,
+  Zoom,
+  Container
 } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import DownloadIcon from '@mui/icons-material/Download';
@@ -28,6 +32,11 @@ import DataTable from '../components/shared/DataTable';
 const HospitalOrchestrator = () => {
   const theme = useTheme();
   const [tabValue, setTabValue] = useState(0);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    setIsLoaded(true);
+  }, []);
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
@@ -137,10 +146,35 @@ const HospitalOrchestrator = () => {
   ];
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
+    <Box sx={{ 
+      flexGrow: 1,
+      background: '#0a1929',
+      minHeight: '100vh',
+      position: 'relative',
+      overflow: 'hidden'
+    }}>
+      {/* Animated background elements */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: `
+            radial-gradient(circle at 20% 20%, rgba(25, 118, 210, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba(66, 165, 245, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 40% 60%, rgba(25, 118, 210, 0.05) 0%, transparent 50%)
+          `,
+          pointerEvents: 'none',
+          zIndex: 0,
+        }}
+      />
+      
+      <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 1, p: 3 }}>
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <LocalHospitalIcon sx={{ fontSize: 32, color: theme.palette.primary.main, mr: 2 }} />
+          <LocalHospitalIcon sx={{ fontSize: 32, color: '#1976d2', mr: 2 }} />
           <Typography variant="h4" component="h1" gutterBottom>
             Hospital Orchestrator
           </Typography>

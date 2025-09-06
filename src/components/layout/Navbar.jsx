@@ -64,7 +64,7 @@ const Navbar = ({ open, handleDrawerToggle }) => {
         </IconButton>
         
         <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-          AllocAI Hub
+          OptiRoute
         </Typography>
 
         {!isMobile && (

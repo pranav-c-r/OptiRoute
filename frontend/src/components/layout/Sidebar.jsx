@@ -32,7 +32,7 @@ const Sidebar = ({ open, handleDrawerToggle }) => {
   const location = useLocation();
   
   const mainMenuItems = [
-    { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
+    { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
     { text: 'Hospital Resource Optimizer', icon: <LocalHospitalIcon />, path: '/hospital-optimizer' },
     { text: 'Disaster Relief Optimizer', icon: <VolunteerActivismIcon />, path: '/disaster-relief' },
     { text: 'Hunger & Waste Optimizer', icon: <RestaurantIcon />, path: '/hunger-waste' },

@@ -20,8 +20,6 @@ import HospitalResourceOptimizer from './pages/HospitalResourceOptimizer';
 import DisasterReliefOptimizer from './pages/DisasterReliefOptimizer';
 import HungerWasteOptimizer from './pages/HungerWasteOptimizer';
 import SmartShelterAllocation from './pages/SmartShelterAllocation';
-import HospitalOrchestrator from './pages/HospitalOrchestrator';
-import ReliefPlanner from './pages/ReliefPlanner';
 
 function App() {
   return (
@@ -51,9 +49,9 @@ function App() {
               </ProtectedRoute>
             } />
             
-            {/* Normal users have access to all pages */}
+            {/* All authenticated users can access all pages */}
             <Route path="/hospital-optimizer" element={
-              <ProtectedRoute allowedRoles={['normal_user', 'doctor', 'hospital_admin', 'ambulance_driver']}>
+              <ProtectedRoute>
                 <Layout>
                   <HospitalResourceOptimizer />
                 </Layout>
@@ -61,7 +59,7 @@ function App() {
             } />
             
             <Route path="/disaster-relief" element={
-              <ProtectedRoute allowedRoles={['normal_user', 'relief_volunteer', 'ngo', 'logistics_driver', 'hospital_admin']}>
+              <ProtectedRoute>
                 <Layout>
                   <DisasterReliefOptimizer />
                 </Layout>
@@ -69,7 +67,7 @@ function App() {
             } />
             
             <Route path="/hunger-waste" element={
-              <ProtectedRoute allowedRoles={['normal_user', 'farmer', 'warehouse_manager', 'ngo', 'logistics_driver', 'relief_volunteer']}>
+              <ProtectedRoute>
                 <Layout>
                   <HungerWasteOptimizer />
                 </Layout>
@@ -77,28 +75,16 @@ function App() {
             } />
             
             <Route path="/shelter-allocation" element={
-              <ProtectedRoute allowedRoles={['normal_user', 'shelter_manager', 'housing_authority', 'landlord', 'ngo', 'relief_volunteer']}>
+              <ProtectedRoute>
                 <Layout>
                   <SmartShelterAllocation />
                 </Layout>
               </ProtectedRoute>
             } />
             
-            <Route path="/hospital-orchestrator" element={
-              <ProtectedRoute allowedRoles={['normal_user', 'hospital_admin', 'doctor']}>
-                <Layout>
-                  <HospitalOrchestrator />
-                </Layout>
-              </ProtectedRoute>
-            } />
+          
             
-            <Route path="/relief-planner" element={
-              <ProtectedRoute allowedRoles={['normal_user', 'ngo', 'relief_volunteer', 'logistics_driver', 'hospital_admin']}>
-                <Layout>
-                  <ReliefPlanner />
-                </Layout>
-              </ProtectedRoute>
-            } />
+            
           </Routes>
         </Router>
       </AuthProvider>

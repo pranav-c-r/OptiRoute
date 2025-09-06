@@ -1,250 +1,149 @@
-# OptiRoute - AI-Powered Resource Allocation Platform
+# OptiRoute – AI-Powered Resource Allocation Platform
 
 ## Overview
 
-OptiRoute is an advanced AI-powered platform designed to optimize resource allocation across multiple domains. The application leverages machine learning algorithms to provide data-driven solutions for hospitals, disaster relief operations, food distribution networks, and housing allocation systems.
+OptiRoute is an AI-driven platform designed to intelligently allocate critical resources across healthcare, disaster relief, food distribution, and housing. Using predictive analytics and optimization algorithms, the system ensures resources reach the right people, at the right time, with minimal waste and maximum impact.
+
+---
+
+## Problem Domains
+
+1. **Healthcare – Hospital Bed & Doctor Allocation**  
+   Patients died during COVID-19 due to poor bed allocation, while doctors were overworked in some hospitals and idle in others. Ambulances were misrouted, and inequity in access worsened outcomes.
+
+2. **Humanitarian Aid – Disaster Relief Resource Allocation**  
+   Relief distribution often suffers from uneven supply, half-empty trucks, duplicated aid, and neglected remote communities.
+
+3. **Food & Supply Chain – Hunger and Waste Crisis**  
+   Millions of tons of food go to waste due to misaligned supply chains, hurting farmers and increasing environmental damage.
+
+4. **Public Housing & Shelter Allocation Crisis**  
+   Government houses remain vacant while families live on streets due to mismanagement, poor planning, and inequality.
+
+---
+
+## Our Solution
+
+OptiRoute uses **machine learning, optimization algorithms, and real-time updates** to transform chaotic manual allocation into intelligent, fair, and efficient ecosystems.
+
+### Key Capabilities
+- **Predictive AI**: Forecasts patient inflow, disaster needs, food demand, and housing vacancies.  
+- **Smart Matching**: Dynamically pairs patients, families, food, and supplies with the best-fit resource.  
+- **Optimization at Scale**: Efficient use of trucks, staff, beds, and units.  
+- **Equity & Prioritization**: Vulnerable populations are flagged and prioritized.  
+- **Dynamic Adaptation**: Real-time updates continuously adjust allocation.  
+- **Impact Simulation**: Tests multiple allocation scenarios for maximum lives saved and waste reduced.
+
+---
 
 ## Features
 
-- **Hospital Resource Optimizer**: AI-driven hospital resource management system that optimizes bed allocation, patient routing, staff scheduling, and ensures equity.
-- **Disaster Relief Optimizer**: AI-powered disaster response planning tool that forecasts needs, optimizes delivery routes, avoids duplication, and detects community needs.
-- **Hunger & Waste Optimizer**: AI-driven food distribution system that forecasts demand, matches surplus to need, optimizes perishables, and maximizes impact.
-- **Smart Shelter Allocation**: AI-powered housing allocation system that forecasts demand, dynamically allocates units, prioritizes needs, and optimizes impact.
+### 1. AI-Driven Hospital Resource Optimizer
+- Predictive bed & ICU availability  
+- Smart patient routing  
+- Dynamic staff scheduling  
+- Risk & equity alerts  
 
-## Live Demo
+### 2. AI-Powered Disaster Relief Optimizer
+- Demand forecasting for shelters  
+- Optimal delivery routing  
+- Duplication avoidance  
+- Community needs detection  
 
-The application is running at http://localhost:5173/ during development.
+### 3. AI-Driven Hunger & Waste Optimizer
+- Demand forecasting for food  
+- Surplus-to-need smart distribution  
+- Perishables optimization  
+- Impact maximization  
 
-## Frontend Technical Documentation
+### 4. Smart Shelter Allocation System
+- Forecasting housing demand  
+- Dynamic reallocation of units  
+- Needs-based prioritization  
+- Occupancy & satisfaction optimization  
 
-### Technology Stack
+---
 
-- **React**: Frontend library for building user interfaces
-- **Vite**: Build tool and development server
-- **React Router**: For navigation and routing
-- **Material UI**: Component library for consistent design
-- **Chart.js & React-Chartjs-2**: For data visualization
-- **MUI X Data Grid**: For interactive data tables
+## Technical Architecture
 
-### Project Structure
+### Backend
+- **Framework**: FastAPI  
+- **Microservices**:
+  - Forecasting: XGBoost, Prophet, Scikit-learn  
+  - Optimization: OR-Tools, PuLP, NetworkX  
+  - Explainability: SHAP, LIME  
+- **Background Jobs**: Celery + Redis  
+- **Realtime Updates**: FastAPI WebSockets  
+- **Data Validation**: Pydantic  
 
-```
-src/
-├── assets/           # Static assets like images
-├── components/       # Reusable UI components
-│   ├── layout/       # Layout components (Navbar, Sidebar)
-│   └── shared/       # Shared components (DashboardCard, ChartComponent, DataTable)
-├── pages/            # Page components for each route
-│   ├── Dashboard.jsx                # Main dashboard
-│   ├── HospitalResourceOptimizer.jsx # Hospital resource optimization
-│   ├── DisasterReliefOptimizer.jsx   # Disaster relief optimization
-│   ├── HungerWasteOptimizer.jsx      # Food distribution optimization
-│   └── SmartShelterAllocation.jsx    # Housing allocation optimization
-├── App.jsx           # Main application component with routing
-├── main.jsx          # Application entry point
-├── theme.js          # MUI theme configuration
-└── index.css         # Global styles
-```
+### Frontend
+- **Framework**: Next.js  
+- **Styling**: Tailwind CSS  
+- **UI Components**: Shadcn/UI, Radix UI  
+- **Charts & Metrics**: Recharts, Chart.js  
+- **State Management**: Zustand + React Query / SWR  
+- **Realtime**: WebSockets  
+- **Auth**: Firebase Authentication  
+- **File Storage**: Firebase Storage  
 
-### Key Components
+### Databases
+- **MongoDB** – Primary NoSQL database (flexible schemas)  
+- **Firebase Firestore** – Live dashboards & session data  
+- **Redis** – Caching & pub-sub  
 
-#### Layout Components
+### Machine Learning Stack
+- Scikit-learn  
+- PyTorch  
+- TensorFlow  
+- Pandas, NumPy  
 
-- **Layout.jsx**: Main layout wrapper that includes Navbar and Sidebar
-- **Navbar.jsx**: Top navigation bar with app title and mobile menu toggle
-- **Sidebar.jsx**: Navigation sidebar with links to all modules
+### Hosting
+- **Frontend**: Vercel  
+- **Backend**: Lightning-AI  
+- **Models**: Hugging Face  
 
-#### Shared Components
+---
 
-- **DashboardCard.jsx**: Reusable card component for feature highlights and metrics
-- **ChartComponent.jsx**: Wrapper for Chart.js with support for multiple chart types
-- **DataTable.jsx**: Wrapper for MUI X Data Grid with common configurations
+## Deployment Strategy
 
-### Routing
+- **Frontend**: Deployed on Vercel  
+- **Backend**: Hosted on Lightning-AI with microservices  
+- **ML Models**: Hosted on Hugging Face  
+- **Database**: MongoDB Atlas + Firebase Firestore  
+- **Realtime Communication**: WebSockets + Redis  
 
-The application uses React Router for navigation with the following routes:
+---
 
-- `/` or `/dashboard`: Main dashboard with overview of all modules
-- `/hospital-optimizer`: Hospital Resource Optimizer module
-- `/disaster-relief`: Disaster Relief Optimizer module
-- `/hunger-waste`: Hunger & Waste Optimizer module
-- `/shelter-allocation`: Smart Shelter Allocation module
+## Impact & Benefits
 
-### Theming
+- **Efficient Allocation**: Critical resources reach those who need them most.  
+- **Data-Driven Decisions**: ML reduces human error and improves fairness.  
+- **Real-Time Monitoring**: Dashboards provide live visibility.  
+- **Social Benefit**: Improves community trust and resilience during crises.  
 
-The application uses a custom dark blue theme defined in `theme.js` with the following key characteristics:
+---
 
-- Dark mode with deep blue background colors
-- Blue primary color palette
-- Light blue secondary color palette
-- Custom typography settings
-- Consistent component styling
+## Future Scope
 
-### Data Visualization
+- Improved ML models with larger datasets  
+- Multi-resource allocation (combined optimization across domains)  
+- Geographic scaling across regions  
+- Smarter prioritization (age, health, urgency factors)  
+- Advanced analytics dashboards  
 
-The application uses Chart.js for data visualization with the following chart types:
-
-- Line charts for time-series data
-- Bar charts for comparative data
-- Doughnut/Pie charts for distribution data
-
-### Responsive Design
-
-The application is fully responsive with the following features:
-
-- Mobile-friendly navigation with collapsible sidebar
-- Responsive grid layouts using MUI Grid
-- Adaptive component sizing
-- Touch-friendly UI elements
-
-## Backend Implementation Plan
-
-### Proposed Technology Stack
-
-- **Node.js & Express**: For API development
-- **MongoDB**: For flexible document storage
-- **Mongoose**: For MongoDB object modeling
-- **JWT**: For authentication
-- **Socket.IO**: For real-time updates (optional)
-- **Redis**: For caching (optional)
-
-### API Architecture
-
-We recommend implementing a RESTful API with the following structure:
-
-```
-/api
-├── /auth              # Authentication endpoints
-├── /users             # User management
-├── /hospital          # Hospital resource optimization
-├── /disaster          # Disaster relief optimization
-├── /food              # Food distribution optimization
-├── /shelter           # Housing allocation optimization
-└── /analytics         # Cross-module analytics
-```
-
-### Data Models
-
-#### Core Models
-
-1. **User Model**
-   - Authentication information
-   - Role-based permissions
-   - Profile data
-
-2. **Organization Model**
-   - Organization details
-   - Subscription information
-   - Module access permissions
-
-#### Module-Specific Models
-
-1. **Hospital Module**
-   - Hospital facilities
-   - Bed inventory
-   - Staff schedules
-   - Patient data
-
-2. **Disaster Relief Module**
-   - Disaster events
-   - Resource inventory
-   - Distribution routes
-   - Need assessments
-
-3. **Food Distribution Module**
-   - Food inventory
-   - Distribution centers
-   - Recipient data
-   - Perishability tracking
-
-4. **Shelter Module**
-   - Housing inventory
-   - Applicant data
-   - Allocation history
-   - Prioritization criteria
-
-### AI/ML Implementation
-
-For each module, we recommend implementing the following AI/ML components:
-
-1. **Predictive Models**
-   - Time-series forecasting for demand prediction
-   - Classification models for prioritization
-   - Regression models for impact assessment
-
-2. **Optimization Algorithms**
-   - Resource allocation optimization
-   - Route optimization
-   - Scheduling optimization
-
-3. **Recommendation Systems**
-   - Matching algorithms for resource-to-need pairing
-   - Decision support systems
-
-### Authentication & Authorization
-
-- JWT-based authentication
-- Role-based access control
-- Organization-level permissions
-- Module-specific access controls
-
-### Deployment Strategy
-
-1. **Development Environment**
-   - Local development with Docker
-   - MongoDB Atlas for database
-
-2. **Staging Environment**
-   - CI/CD pipeline with GitHub Actions
-   - Containerized deployment
-
-3. **Production Environment**
-   - Kubernetes for orchestration
-   - Cloud provider (AWS, Azure, or GCP)
-   - Load balancing and auto-scaling
-   - Monitoring and logging
-
-### API Documentation
-
-Implement comprehensive API documentation using:
-- Swagger/OpenAPI for interactive documentation
-- Markdown-based documentation for conceptual guides
+---
 
 ## Getting Started
 
 ### Prerequisites
-
-- Node.js (v14 or higher)
-- npm or yarn
+- Node.js (v18 or higher)  
+- Python (v3.9+)  
+- npm / yarn  
+- MongoDB & Firebase setup  
 
 ### Installation
 
-1. Clone the repository
+1. Clone the repository:
    ```bash
    git clone https://github.com/yourusername/optiroute.git
    cd optiroute
-   ```
-
-2. Install dependencies
-   ```bash
-   npm install
-   ```
-
-3. Start the development server
-   ```bash
-   npm run dev
-   ```
-
-4. Open your browser and navigate to http://localhost:5173
-
-## Future Enhancements
-
-- Implement authentication and user roles
-- Connect to backend services
-- Add real-time data updates
-- Implement advanced AI models
-- Add mobile applications
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.

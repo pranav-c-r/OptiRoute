@@ -243,6 +243,166 @@ export const addLogisticsInfoToFirebase = async (uid, logisticsInfo) => {
   }
 };
 
+// NGO Management API
+export const ngoAPI = {
+  // Profile Management
+  updateProfile: async (userId, profileData) => {
+    const response = await fetch(`${API_BASE_URL}/hospital/profiles/update`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: userId,
+        role: 'ngo',
+        profile_data: profileData
+      })
+    });
+    return response.json();
+  },
+
+  getProfile: async (userId) => {
+    const response = await fetch(`${API_BASE_URL}/hospital/profiles/${userId}`);
+    return response.json();
+  },
+
+  getProfilesByRole: async (role = 'ngo') => {
+    const response = await fetch(`${API_BASE_URL}/hospital/profiles/role/${role}`);
+    return response.json();
+  },
+
+  // Resource Management
+  updateResources: async (ngoData) => {
+    const response = await fetch(`${API_BASE_URL}/hospital/ngo/update-resources`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(ngoData)
+    });
+    return response.json();
+  },
+
+  // NGO Discovery
+  getNGOsByFocusArea: async (focusArea) => {
+    const response = await fetch(`${API_BASE_URL}/hospital/ngo/by-focus-area/${focusArea}`);
+    return response.json();
+  },
+
+  // Location-based Services
+  getNearbyNGOs: async (lat, lon, radius = 25.0) => {
+    const profiles = await ngoAPI.getProfilesByRole('ngo');
+    if (!profiles.profiles) return { ngos: [] };
+    
+    const nearbyNGOs = profiles.profiles.filter(ngo => {
+      const ngoData = ngo.profile_data;
+      if (ngoData.location_lat && ngoData.location_lon) {
+        const distance = calculateDistance(lat, lon, ngoData.location_lat, ngoData.location_lon);
+        return distance <= radius;
+      }
+      return false;
+    }).map(ngo => ({
+      ...ngo,
+      distance_km: calculateDistance(lat, lon, ngo.profile_data.location_lat, ngo.profile_data.location_lon)
+    }));
+
+    return { ngos: nearbyNGOs.sort((a, b) => a.distance_km - b.distance_km) };
+  },
+
+  // Operation Management
+  createOperation: async (operationData) => {
+    // Mock implementation - in real scenario this would be a backend endpoint
+    const operations = JSON.parse(localStorage.getItem('ngo_operations') || '[]');
+    const newOperation = {
+      ...operationData,
+      id: `OP${String(operations.length + 1).padStart(3, '0')}`,
+      created_at: new Date().toISOString(),
+      status: 'active'
+    };
+    operations.push(newOperation);
+    localStorage.setItem('ngo_operations', JSON.stringify(operations));
+    return { success: true, operation: newOperation };
+  },
+
+  getOperations: async (userId) => {
+    const operations = JSON.parse(localStorage.getItem('ngo_operations') || '[]');
+    return { operations: operations.filter(op => op.ngo_id === userId) };
+  },
+
+  updateOperation: async (operationId, updateData) => {
+    const operations = JSON.parse(localStorage.getItem('ngo_operations') || '[]');
+    const operationIndex = operations.findIndex(op => op.id === operationId);
+    if (operationIndex !== -1) {
+      operations[operationIndex] = { ...operations[operationIndex], ...updateData };
+      localStorage.setItem('ngo_operations', JSON.stringify(operations));
+      return { success: true, operation: operations[operationIndex] };
+    }
+    return { success: false, error: 'Operation not found' };
+  },
+
+  // Volunteer Management
+  getVolunteers: async (ngoId) => {
+    const volunteers = JSON.parse(localStorage.getItem(`ngo_volunteers_${ngoId}`) || '[]');
+    return { volunteers };
+  },
+
+  addVolunteer: async (ngoId, volunteerData) => {
+    const volunteers = JSON.parse(localStorage.getItem(`ngo_volunteers_${ngoId}`) || '[]');
+    const newVolunteer = {
+      ...volunteerData,
+      id: volunteers.length + 1,
+      joined_date: new Date().toISOString(),
+      status: 'active'
+    };
+    volunteers.push(newVolunteer);
+    localStorage.setItem(`ngo_volunteers_${ngoId}`, JSON.stringify(volunteers));
+    return { success: true, volunteer: newVolunteer };
+  },
+
+  updateVolunteerStatus: async (ngoId, volunteerId, status) => {
+    const volunteers = JSON.parse(localStorage.getItem(`ngo_volunteers_${ngoId}`) || '[]');
+    const volunteerIndex = volunteers.findIndex(v => v.id === volunteerId);
+    if (volunteerIndex !== -1) {
+      volunteers[volunteerIndex].status = status;
+      localStorage.setItem(`ngo_volunteers_${ngoId}`, JSON.stringify(volunteers));
+      return { success: true };
+    }
+    return { success: false, error: 'Volunteer not found' };
+  },
+
+  // Analytics
+  getAnalytics: async (ngoId) => {
+    const operations = JSON.parse(localStorage.getItem('ngo_operations') || '[]');
+    const volunteers = JSON.parse(localStorage.getItem(`ngo_volunteers_${ngoId}`) || '[]');
+    const profile = await ngoAPI.getProfile(ngoId);
+    
+    const ngoOperations = operations.filter(op => op.ngo_id === ngoId);
+    const activeOperations = ngoOperations.filter(op => op.status === 'active');
+    const completedOperations = ngoOperations.filter(op => op.status === 'completed');
+    const activeVolunteers = volunteers.filter(v => v.status === 'active');
+    
+    return {
+      total_operations: ngoOperations.length,
+      active_operations: activeOperations.length,
+      completed_operations: completedOperations.length,
+      total_volunteers: volunteers.length,
+      active_volunteers: activeVolunteers.length,
+      average_operation_progress: ngoOperations.length > 0 
+        ? ngoOperations.reduce((sum, op) => sum + (op.progress || 0), 0) / ngoOperations.length 
+        : 0
+    };
+  }
+};
+
+// Utility function for distance calculation
+const calculateDistance = (lat1, lon1, lat2, lon2) => {
+  const R = 6371; // Radius of the Earth in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+};
+
 // Utility function for error handling
 export const handleApiError = (error) => {
   console.error('API Error:', error);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -34,7 +34,26 @@ import {
   Fade,
   Slide,
   Alert,
-  LinearProgress
+  LinearProgress,
+  Tabs,
+  Tab,
+  Snackbar,
+  CircularProgress,
+  CardActions,
+  ListItemSecondaryAction,
+  Switch,
+  Badge,
+  Zoom,
+  Grow,
+  Tooltip,
+  ToggleButton,
+  ToggleButtonGroup,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  SpeedDial,
+  SpeedDialIcon,
+  SpeedDialAction
 } from '@mui/material';
 import {
   VolunteerActivism as VolunteerIcon,
@@ -49,11 +68,32 @@ import {
   Restaurant as FoodIcon,
   LocalHospital as HealthIcon,
   Home as ShelterIcon,
-  Phone as PhoneIcon
+  Phone as PhoneIcon,
+  Assignment as OperationIcon,
+  Analytics as AnalyticsIcon,
+  Map as MapIcon,
+  Notifications as NotificationIcon,
+  Group as GroupIcon,
+  TrendingUp as TrendingIcon,
+  Warning as WarningIcon,
+  CheckCircle as SuccessIcon,
+  Schedule as ScheduleIcon,
+  Share as ShareIcon,
+  Refresh as RefreshIcon,
+  ExpandMore as ExpandMoreIcon,
+  PersonAdd as PersonAddIcon,
+  Work as WorkIcon,
+  Timeline as TimelineIcon,
+  Dashboard as DashboardIcon
 } from '@mui/icons-material';
+// Charts will be implemented in future analytics features
+// import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line, Area, AreaChart } from 'recharts';
+import { ngoAPI, handleApiError } from '../../services/api';
 
 const NGODashboard = ({ user }) => {
   const theme = useTheme();
+  
+  // Enhanced State Management
   const [ngoData, setNgoData] = useState({
     organization_name: 'Hope Foundation',
     registration_number: 'NGO-2024-001',
@@ -69,37 +109,84 @@ const NGODashboard = ({ user }) => {
         quantity: 500,
         unit: 'meal packets',
         status: 'available',
-        location: 'Main Warehouse'
+        location: 'Main Warehouse',
+        last_updated: new Date().toISOString(),
+        allocated: 150
       },
       {
         resource_type: 'Medical Supplies',
         quantity: 100,
         unit: 'first aid kits',
         status: 'available',
-        location: 'Medical Storage'
+        location: 'Medical Storage',
+        last_updated: new Date().toISOString(),
+        allocated: 25
       },
       {
         resource_type: 'Blankets',
         quantity: 200,
         unit: 'pieces',
         status: 'low',
-        location: 'Relief Center'
+        location: 'Relief Center',
+        last_updated: new Date().toISOString(),
+        allocated: 180
       }
     ]
   });
+  
+  // UI State
   const [isLoaded, setIsLoaded] = useState(false);
+  const [currentTab, setCurrentTab] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
+  
+  // Dialog States
   const [openResourceDialog, setOpenResourceDialog] = useState(false);
   const [openProfileDialog, setOpenProfileDialog] = useState(false);
+  const [openVolunteerDialog, setOpenVolunteerDialog] = useState(false);
+  const [openOperationDialog, setOpenOperationDialog] = useState(false);
+  const [openAnalyticsDialog, setOpenAnalyticsDialog] = useState(false);
+  
+  // Form States
   const [editingResource, setEditingResource] = useState(null);
+  const [editingVolunteer, setEditingVolunteer] = useState(null);
+  const [editingOperation, setEditingOperation] = useState(null);
+  
   const [resourceForm, setResourceForm] = useState({
     resource_type: '',
     quantity: 0,
     unit: '',
     status: 'available',
-    location: ''
+    location: '',
+    allocated: 0
   });
+  
+  const [volunteerForm, setVolunteerForm] = useState({
+    name: '',
+    contact: '',
+    skills: [],
+    availability: 'available',
+    experience_years: 0
+  });
+  
+  const [operationForm, setOperationForm] = useState({
+    name: '',
+    type: 'disaster_relief',
+    description: '',
+    location: '',
+    priority: 'medium',
+    expected_duration: 1,
+    required_volunteers: 1,
+    required_resources: []
+  });
+  
+  // Data States
   const [activeOperations, setActiveOperations] = useState([]);
   const [volunteers, setVolunteers] = useState([]);
+  const [analytics, setAnalytics] = useState(null);
+  const [nearbyNGOs, setNearbyNGOs] = useState([]);
+  const [realtimeUpdates, setRealtimeUpdates] = useState(true);
 
   useEffect(() => {
     loadNGOData();
@@ -266,6 +353,34 @@ const NGODashboard = ({ user }) => {
         </Box>
       </Fade>
 
+      {/* Enhanced Tabbed Interface */}
+      <Paper sx={{
+        mb: 3,
+        background: 'rgba(39, 62, 107, 0.8)',
+        backdropFilter: 'blur(10px)',
+        border: '1px solid rgba(156, 39, 176, 0.2)',
+        borderRadius: 3
+      }}>
+        <Tabs
+          value={currentTab}
+          onChange={(e, newValue) => setCurrentTab(newValue)}
+          sx={{ 
+            borderBottom: 1, 
+            borderColor: 'rgba(255,255,255,0.1)',
+            '& .MuiTab-root': { color: 'rgba(255,255,255,0.7)' },
+            '& .Mui-selected': { color: 'white' }
+          }}
+        >
+          <Tab label="Dashboard" icon={<DashboardIcon />} />
+          <Tab label="Operations" icon={<OperationIcon />} />
+          <Tab label="Volunteers" icon={<GroupIcon />} />
+          <Tab label="Analytics" icon={<AnalyticsIcon />} />
+          <Tab label="Network" icon={<ShareIcon />} />
+        </Tabs>
+      </Paper>
+
+      {/* Tab Content */}
+      {currentTab === 0 && (
       <Grid container spacing={3}>
         {/* NGO Profile Card */}
         <Grid item xs={12} md={4}>
@@ -627,6 +742,114 @@ const NGODashboard = ({ user }) => {
           </Slide>
         </Grid>
       </Grid>
+      )}
+
+      {/* Operations Tab */}
+      {currentTab === 1 && (
+        <Paper sx={{
+          p: 3,
+          background: 'rgba(39, 62, 107, 0.8)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(156, 39, 176, 0.2)',
+          borderRadius: 3,
+          textAlign: 'center'
+        }}>
+          <OperationIcon sx={{ fontSize: 60, color: '#9c27b0', mb: 2 }} />
+          <Typography variant="h5" sx={{ color: 'white', mb: 2 }}>Operations Management</Typography>
+          <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.8)' }}>Advanced operation management features coming soon!</Typography>
+        </Paper>
+      )}
+
+      {/* Volunteers Tab */}
+      {currentTab === 2 && (
+        <Paper sx={{
+          p: 3,
+          background: 'rgba(39, 62, 107, 0.8)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(156, 39, 176, 0.2)',
+          borderRadius: 3,
+          textAlign: 'center'
+        }}>
+          <GroupIcon sx={{ fontSize: 60, color: '#e91e63', mb: 2 }} />
+          <Typography variant="h5" sx={{ color: 'white', mb: 2 }}>Volunteer Management</Typography>
+          <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.8)' }}>Real-time volunteer tracking and management features coming soon!</Typography>
+        </Paper>
+      )}
+
+      {/* Analytics Tab */}
+      {currentTab === 3 && (
+        <Paper sx={{
+          p: 3,
+          background: 'rgba(39, 62, 107, 0.8)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(156, 39, 176, 0.2)',
+          borderRadius: 3,
+          textAlign: 'center'
+        }}>
+          <AnalyticsIcon sx={{ fontSize: 60, color: '#4caf50', mb: 2 }} />
+          <Typography variant="h5" sx={{ color: 'white', mb: 2 }}>Analytics Dashboard</Typography>
+          <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.8)' }}>Comprehensive analytics and reporting features coming soon!</Typography>
+        </Paper>
+      )}
+
+      {/* Network Tab */}
+      {currentTab === 4 && (
+        <Paper sx={{
+          p: 3,
+          background: 'rgba(39, 62, 107, 0.8)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(156, 39, 176, 0.2)',
+          borderRadius: 3,
+          textAlign: 'center'
+        }}>
+          <ShareIcon sx={{ fontSize: 60, color: '#ff9800', mb: 2 }} />
+          <Typography variant="h5" sx={{ color: 'white', mb: 2 }}>NGO Network</Typography>
+          <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.8)' }}>Collaborative network and resource sharing features coming soon!</Typography>
+        </Paper>
+      )}
+
+      {/* Floating Action Button */}
+      <SpeedDial
+        ariaLabel="NGO Actions"
+        sx={{ position: 'fixed', bottom: 16, right: 16 }}
+        icon={<SpeedDialIcon />}
+      >
+        <SpeedDialAction
+          icon={<AddIcon />}
+          tooltipTitle="Add Resource"
+          onClick={handleAddResource}
+        />
+        <SpeedDialAction
+          icon={<PersonAddIcon />}
+          tooltipTitle="Add Volunteer"
+          onClick={() => setOpenVolunteerDialog(true)}
+        />
+        <SpeedDialAction
+          icon={<WorkIcon />}
+          tooltipTitle="New Operation"
+          onClick={() => setOpenOperationDialog(true)}
+        />
+        <SpeedDialAction
+          icon={<AnalyticsIcon />}
+          tooltipTitle="View Analytics"
+          onClick={() => setCurrentTab(3)}
+        />
+      </SpeedDial>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+      >
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
 
       {/* Add/Edit Resource Dialog */}
       <Dialog open={openResourceDialog} onClose={() => setOpenResourceDialog(false)} maxWidth="sm" fullWidth>

@@ -24,23 +24,32 @@ const theme = createTheme({
     divider: 'rgba(194, 224, 255, 0.08)',
   },
   typography: {
-    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+    fontFamily: '"Poppins", "Roboto", "Helvetica", "Arial", sans-serif',
     h1: {
-      fontWeight: 500,
+      fontWeight: 600,
     },
     h2: {
-      fontWeight: 500,
+      fontWeight: 600,
     },
     h3: {
-      fontWeight: 500,
+      fontWeight: 600,
     },
     h4: {
-      fontWeight: 500,
+      fontWeight: 600,
     },
     h5: {
-      fontWeight: 500,
+      fontWeight: 600,
     },
     h6: {
+      fontWeight: 600,
+    },
+    body1: {
+      fontWeight: 400,
+    },
+    body2: {
+      fontWeight: 400,
+    },
+    button: {
       fontWeight: 500,
     },
   },

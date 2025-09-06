@@ -22,6 +22,8 @@ import HomeIcon from '@mui/icons-material/Home';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import SettingsIcon from '@mui/icons-material/Settings';
 import HelpIcon from '@mui/icons-material/Help';
+import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
+import AssignmentIcon from '@mui/icons-material/Assignment';
 
 const drawerWidth = 240;
 
@@ -37,7 +39,7 @@ const Sidebar = ({ open, handleDrawerToggle }) => {
     { text: 'Disaster Relief Optimizer', icon: <VolunteerActivismIcon />, path: '/disaster-relief' },
     { text: 'Hunger & Waste Optimizer', icon: <RestaurantIcon />, path: '/hunger-waste' },
     { text: 'Smart Shelter Allocation', icon: <HomeIcon />, path: '/shelter-allocation' },
-  ];
+  ]
   
   const secondaryMenuItems = [
     { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },

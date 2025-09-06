@@ -13,18 +13,9 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     return <Navigate to="/login" replace />;
   }
 
-  // If no specific roles are required, allow access
-  if (allowedRoles.length === 0) {
-    return children;
-  }
-
-  // Check if user's role is in the allowed roles
-  if (allowedRoles.includes(user.role)) {
-    return children;
-  }
-
-  // If user doesn't have access, redirect to dashboard
-  return <Navigate to="/dashboard" replace />;
+  // Allow all authenticated users to access all pages
+  // The individual pages will handle role-based UI rendering
+  return children;
 };
 
 export default ProtectedRoute;

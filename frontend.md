@@ -8,6 +8,7 @@ The frontend is built using React and Material-UI, providing a modern, responsiv
 - **Charts**: Visualize bed occupancy, available beds at nearest hospitals, staff by department, and more using Chart.js.
 - **Tables**: Display hospital network details and emergency/critical patient alerts using a custom DataTable component.
 - **Dialogs**: Patient search and AI plan generation dialogs for interactive user input and results.
+
 - **Error Handling**: Alerts and feedback for failed API calls or empty results.
 - **Geolocation**: Automatically fetches patient location for routing.
 

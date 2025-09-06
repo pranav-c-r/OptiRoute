@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   Grid, 
   Typography, 
@@ -6,7 +6,11 @@ import {
   Paper,
   useTheme,
   Tooltip,
-  IconButton
+  IconButton,
+  Fade,
+  Slide,
+  Zoom,
+  Container
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
 import AssessmentIcon from '@mui/icons-material/Assessment';
@@ -21,6 +25,11 @@ import DataTable from '../components/shared/DataTable';
 
 const HungerWasteOptimizer = () => {
   const theme = useTheme();
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    setIsLoaded(true);
+  }, []);
 
   // Sample data for food demand forecasting
   const foodDemandData = {
@@ -29,15 +38,15 @@ const HungerWasteOptimizer = () => {
       {
         label: 'Predicted Demand (tons)',
         data: [120, 115, 125, 130, 140, 150, 160, 155, 145, 135, 125, 130],
-        borderColor: theme.palette.primary.main,
-        backgroundColor: theme.palette.primary.main + '40',
+        borderColor: '#1976d2',
+        backgroundColor: 'rgba(25, 118, 210, 0.3)',
         fill: true,
       },
       {
         label: 'Actual Consumption (tons)',
         data: [118, 112, 128, 132, 138, 152, 158, 153, 142, 132, null, null],
-        borderColor: theme.palette.secondary.main,
-        backgroundColor: theme.palette.secondary.main + '40',
+        borderColor: '#42a5f5',
+        backgroundColor: 'rgba(66, 165, 245, 0.3)',
         fill: true,
       }
     ]
@@ -96,166 +105,467 @@ const HungerWasteOptimizer = () => {
   ];
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" sx={{ mb: 4 }}>
-        AI Driven Hunger and Waste Optimizer
-      </Typography>
-
-      <Grid container spacing={3}>
-        {/* Feature cards */}
-        <Grid item xs={12} md={6} lg={3}>
-          <DashboardCard 
-            title="Demand Forecasting" 
-            subtitle="AI predicts local food needs"
-            icon={<AssessmentIcon />}
-          >
-            <Typography variant="body2" color="text.secondary">
-              Using historical consumption, population, and seasonal trends
+    <Box sx={{ 
+      p: 3,
+      background: '#0a1929',
+      minHeight: '100vh',
+      position: 'relative',
+      overflow: 'hidden'
+    }}>
+      {/* Animated background elements */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: `
+            radial-gradient(circle at 20% 20%, rgba(25, 118, 210, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba(66, 165, 245, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 40% 60%, rgba(25, 118, 210, 0.05) 0%, transparent 50%)
+          `,
+          pointerEvents: 'none',
+          zIndex: 0,
+        }}
+      />
+      
+      <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 1 }}>
+        <Fade in={isLoaded} timeout={800}>
+          <Box sx={{ textAlign: 'center', mb: 6 }}>
+            <Typography variant="h3" sx={{ 
+              mb: 2,
+              background: 'linear-gradient(45deg, #1976d2, #42a5f5)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              fontWeight: 700,
+              letterSpacing: '-0.02em'
+            }}>
+              AI Driven Hunger and Waste Optimizer
             </Typography>
-          </DashboardCard>
-        </Grid>
-
-        <Grid item xs={12} md={6} lg={3}>
-          <DashboardCard 
-            title="Smart Distribution" 
-            subtitle="ML matches surplus to communities in need"
-            icon={<LocalShippingIcon />}
-          >
-            <Typography variant="body2" color="text.secondary">
-              Minimizing waste and hunger through optimal matching
+            <Typography variant="h6" sx={{ 
+              color: 'rgba(255, 255, 255, 0.8)',
+              fontWeight: 400,
+              maxWidth: '600px',
+              mx: 'auto'
+            }}>
+              Smart food distribution and waste reduction system
             </Typography>
-          </DashboardCard>
-        </Grid>
+          </Box>
+        </Fade>
 
-        <Grid item xs={12} md={6} lg={3}>
-          <DashboardCard 
-            title="Perishables Optimization" 
-            subtitle="AI plans delivery routes and cold storage"
-            icon={<AccessTimeIcon />}
-          >
-            <Typography variant="body2" color="text.secondary">
-              Preventing spoilage through optimized logistics
-            </Typography>
-          </DashboardCard>
-        </Grid>
+        <Grid container spacing={4}>
+          {/* Feature cards */}
+          <Grid item xs={12} md={6} lg={3}>
+            <Slide direction="up" in={isLoaded} timeout={1000}>
+              <Box>
+                <DashboardCard 
+                  title="Demand Forecasting" 
+                  subtitle="AI predicts local food needs"
+                  icon={<AssessmentIcon sx={{ fontSize: 28 }} />}
+                  gradient="linear-gradient(135deg, rgba(10, 25, 41, 0.9) 0%, rgba(39, 62, 107, 0.8) 100%)"
+                >
+                  <Typography variant="body2" sx={{ 
+                    color: 'rgba(255,255,255,0.9)', 
+                    lineHeight: 1.6,
+                    fontFamily: 'Poppins'
+                  }}>
+                    Using historical consumption, population, and seasonal trends
+                  </Typography>
+                </DashboardCard>
+              </Box>
+            </Slide>
+          </Grid>
 
-        <Grid item xs={12} md={6} lg={3}>
-          <DashboardCard 
-            title="Impact Maximization" 
-            subtitle="System simulates allocation scenarios"
-            icon={<TrendingUpIcon />}
-          >
-            <Typography variant="body2" color="text.secondary">
-              Reducing economic loss for farmers and environmental impact
-            </Typography>
-          </DashboardCard>
-        </Grid>
+          <Grid item xs={12} md={6} lg={3}>
+            <Slide direction="up" in={isLoaded} timeout={1200}>
+              <Box>
+                <DashboardCard 
+                  title="Smart Distribution" 
+                  subtitle="ML matches surplus to communities in need"
+                  icon={<LocalShippingIcon sx={{ fontSize: 28 }} />}
+                  gradient="linear-gradient(135deg, rgba(10, 25, 41, 0.9) 0%, rgba(39, 62, 107, 0.8) 100%)"
+                >
+                  <Typography variant="body2" sx={{ 
+                    color: 'rgba(255,255,255,0.9)', 
+                    lineHeight: 1.6,
+                    fontFamily: 'Poppins'
+                  }}>
+                    Minimizing waste and hunger through optimal matching
+                  </Typography>
+                </DashboardCard>
+              </Box>
+            </Slide>
+          </Grid>
 
-        {/* Charts and tables */}
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2, height: '100%' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">Food Demand Forecast</Typography>
-              <Tooltip title="AI predicts local food needs using historical consumption, population, and seasonal trends">
-                <IconButton size="small">
-                  <InfoIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </Box>
-            <ChartComponent 
-              type="line" 
-              data={foodDemandData} 
-              options={{
-                scales: {
-                  y: {
-                    beginAtZero: true,
-                    title: {
-                      display: true,
-                      text: 'Food (tons)'
-                    }
-                  }
+          <Grid item xs={12} md={6} lg={3}>
+            <Slide direction="up" in={isLoaded} timeout={1400}>
+              <Box>
+                <DashboardCard 
+                  title="Perishables Optimization" 
+                  subtitle="AI plans delivery routes and cold storage"
+                  icon={<AccessTimeIcon sx={{ fontSize: 28 }} />}
+                  gradient="linear-gradient(135deg, rgba(10, 25, 41, 0.9) 0%, rgba(39, 62, 107, 0.8) 100%)"
+                >
+                  <Typography variant="body2" sx={{ 
+                    color: 'rgba(255,255,255,0.9)', 
+                    lineHeight: 1.6,
+                    fontFamily: 'Poppins'
+                  }}>
+                    Preventing spoilage through optimized logistics
+                  </Typography>
+                </DashboardCard>
+              </Box>
+            </Slide>
+          </Grid>
+
+          <Grid item xs={12} md={6} lg={3}>
+            <Slide direction="up" in={isLoaded} timeout={1600}>
+              <Box>
+                <DashboardCard 
+                  title="Impact Maximization" 
+                  subtitle="System simulates allocation scenarios"
+                  icon={<TrendingUpIcon sx={{ fontSize: 28 }} />}
+                  gradient="linear-gradient(135deg, rgba(10, 25, 41, 0.9) 0%, rgba(39, 62, 107, 0.8) 100%)"
+                >
+                  <Typography variant="body2" sx={{ 
+                    color: 'rgba(255,255,255,0.9)', 
+                    lineHeight: 1.6,
+                    fontFamily: 'Poppins'
+                  }}>
+                    Reducing economic loss for farmers and environmental impact
+                  </Typography>
+                </DashboardCard>
+              </Box>
+            </Slide>
+          </Grid>
+
+          {/* Charts and tables */}
+          <Grid item xs={12} md={6}>
+            <Fade in={isLoaded} timeout={1800}>
+              <Paper sx={{ 
+                p: 3, 
+                height: '100%',
+                background: 'rgba(39, 62, 107, 0.8)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(25, 118, 210, 0.2)',
+                borderRadius: 3,
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 12px 40px rgba(25, 118, 210, 0.15)',
                 }
-              }}
-            />
-          </Paper>
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2, height: '100%' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">Smart Distribution Matching</Typography>
-              <Tooltip title="ML matches surplus produce to nearby communities in need">
-                <IconButton size="small">
-                  <InfoIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </Box>
-            <ChartComponent 
-              type="bar" 
-              data={distributionData} 
-              options={{
-                scales: {
-                  y: {
-                    beginAtZero: true,
-                    title: {
-                      display: true,
-                      text: 'Food (tons)'
+              }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                  <Typography variant="h6" sx={{ 
+                    fontWeight: 600,
+                    background: 'linear-gradient(45deg, #1976d2, #42a5f5)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    fontFamily: 'Poppins'
+                  }}>
+                    Food Demand Forecast
+                  </Typography>
+                  <Tooltip title="AI predicts local food needs using historical consumption, population, and seasonal trends">
+                    <IconButton size="small" sx={{ color: 'rgba(25, 118, 210, 0.7)' }}>
+                      <InfoIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+                <ChartComponent 
+                  type="line" 
+                  data={foodDemandData} 
+                  options={{
+                    responsive: true,
+                    animation: {
+                      duration: 2000,
+                      easing: 'easeInOutQuart'
+                    },
+                    plugins: {
+                      legend: {
+                        labels: {
+                          color: 'white',
+                          font: {
+                            family: 'Poppins',
+                            weight: 500
+                          }
+                        }
+                      }
+                    },
+                    scales: {
+                      x: {
+                        grid: {
+                          color: 'rgba(255,255,255,0.1)'
+                        },
+                        ticks: {
+                          color: 'white',
+                          font: {
+                            family: 'Poppins'
+                          }
+                        }
+                      },
+                      y: {
+                        beginAtZero: true,
+                        grid: {
+                          color: 'rgba(255,255,255,0.1)'
+                        },
+                        ticks: {
+                          color: 'white',
+                          font: {
+                            family: 'Poppins'
+                          }
+                        },
+                        title: {
+                          display: true,
+                          text: 'Food (tons)',
+                          color: 'white',
+                          font: {
+                            family: 'Poppins',
+                            weight: 500
+                          }
+                        }
+                      }
                     }
-                  }
-                }
-              }}
-            />
-          </Paper>
-        </Grid>
+                  }}
+                />
+              </Paper>
+            </Fade>
+          </Grid>
 
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2, height: '100%' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">Perishables Optimization</Typography>
-              <Tooltip title="AI plans delivery routes and cold storage usage to prevent spoilage">
-                <IconButton size="small">
-                  <InfoIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </Box>
-            <ChartComponent 
-              type="bar" 
-              data={perishablesData} 
-              options={{
-                scales: {
-                  y: {
-                    beginAtZero: true,
-                    title: {
-                      display: true,
-                      text: 'Days'
+          <Grid item xs={12} md={6}>
+            <Fade in={isLoaded} timeout={2000}>
+              <Paper sx={{ 
+                p: 3, 
+                height: '100%',
+                background: 'rgba(39, 62, 107, 0.8)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(25, 118, 210, 0.2)',
+                borderRadius: 3,
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 12px 40px rgba(25, 118, 210, 0.15)',
+                }
+              }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                  <Typography variant="h6" sx={{ 
+                    fontWeight: 600,
+                    background: 'linear-gradient(45deg, #1976d2, #42a5f5)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    fontFamily: 'Poppins'
+                  }}>
+                    Smart Distribution Matching
+                  </Typography>
+                  <Tooltip title="ML matches surplus produce to nearby communities in need">
+                    <IconButton size="small" sx={{ color: 'rgba(25, 118, 210, 0.7)' }}>
+                      <InfoIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+                <ChartComponent 
+                  type="bar" 
+                  data={distributionData} 
+                  options={{
+                    responsive: true,
+                    animation: {
+                      duration: 2000,
+                      easing: 'easeInOutQuart'
+                    },
+                    plugins: {
+                      legend: {
+                        labels: {
+                          color: 'white',
+                          font: {
+                            family: 'Poppins',
+                            weight: 500
+                          }
+                        }
+                      }
+                    },
+                    scales: {
+                      x: {
+                        grid: {
+                          color: 'rgba(255,255,255,0.1)'
+                        },
+                        ticks: {
+                          color: 'white',
+                          font: {
+                            family: 'Poppins'
+                          }
+                        }
+                      },
+                      y: {
+                        beginAtZero: true,
+                        grid: {
+                          color: 'rgba(255,255,255,0.1)'
+                        },
+                        ticks: {
+                          color: 'white',
+                          font: {
+                            family: 'Poppins'
+                          }
+                        },
+                        title: {
+                          display: true,
+                          text: 'Food (tons)',
+                          color: 'white',
+                          font: {
+                            family: 'Poppins',
+                            weight: 500
+                          }
+                        }
+                      }
                     }
-                  }
-                }
-              }}
-            />
-          </Paper>
-        </Grid>
+                  }}
+                />
+              </Paper>
+            </Fade>
+          </Grid>
 
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2, height: '100%' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">Impact Maximization Scenarios</Typography>
-              <Tooltip title="The system simulates allocation scenarios to reduce economic loss and environmental impact">
-                <IconButton size="small">
-                  <InfoIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </Box>
-            <Box sx={{ height: 400 }}>
-              <DataTable 
-                rows={impactRows} 
-                columns={impactColumns} 
-                pageSize={5}
-              />
-            </Box>
-          </Paper>
+          <Grid item xs={12} md={6}>
+            <Fade in={isLoaded} timeout={2200}>
+              <Paper sx={{ 
+                p: 3, 
+                height: '100%',
+                background: 'rgba(39, 62, 107, 0.8)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(25, 118, 210, 0.2)',
+                borderRadius: 3,
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 12px 40px rgba(25, 118, 210, 0.15)',
+                }
+              }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                  <Typography variant="h6" sx={{ 
+                    fontWeight: 600,
+                    background: 'linear-gradient(45deg, #1976d2, #42a5f5)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    fontFamily: 'Poppins'
+                  }}>
+                    Perishables Optimization
+                  </Typography>
+                  <Tooltip title="AI plans delivery routes and cold storage usage to prevent spoilage">
+                    <IconButton size="small" sx={{ color: 'rgba(25, 118, 210, 0.7)' }}>
+                      <InfoIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+                <ChartComponent 
+                  type="bar" 
+                  data={perishablesData} 
+                  options={{
+                    responsive: true,
+                    animation: {
+                      duration: 2000,
+                      easing: 'easeInOutQuart'
+                    },
+                    plugins: {
+                      legend: {
+                        labels: {
+                          color: 'white',
+                          font: {
+                            family: 'Poppins',
+                            weight: 500
+                          }
+                        }
+                      }
+                    },
+                    scales: {
+                      x: {
+                        grid: {
+                          color: 'rgba(255,255,255,0.1)'
+                        },
+                        ticks: {
+                          color: 'white',
+                          font: {
+                            family: 'Poppins'
+                          }
+                        }
+                      },
+                      y: {
+                        beginAtZero: true,
+                        grid: {
+                          color: 'rgba(255,255,255,0.1)'
+                        },
+                        ticks: {
+                          color: 'white',
+                          font: {
+                            family: 'Poppins'
+                          }
+                        },
+                        title: {
+                          display: true,
+                          text: 'Days',
+                          color: 'white',
+                          font: {
+                            family: 'Poppins',
+                            weight: 500
+                          }
+                        }
+                      }
+                    }
+                  }}
+                />
+              </Paper>
+            </Fade>
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <Fade in={isLoaded} timeout={2400}>
+              <Paper sx={{ 
+                p: 3, 
+                height: '100%',
+                background: 'rgba(39, 62, 107, 0.8)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(25, 118, 210, 0.2)',
+                borderRadius: 3,
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 12px 40px rgba(25, 118, 210, 0.15)',
+                }
+              }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                  <Typography variant="h6" sx={{ 
+                    fontWeight: 600,
+                    background: 'linear-gradient(45deg, #1976d2, #42a5f5)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    fontFamily: 'Poppins'
+                  }}>
+                    Impact Maximization Scenarios
+                  </Typography>
+                  <Tooltip title="The system simulates allocation scenarios to reduce economic loss and environmental impact">
+                    <IconButton size="small" sx={{ color: 'rgba(25, 118, 210, 0.7)' }}>
+                      <InfoIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+                <Box sx={{ height: 400 }}>
+                  <DataTable 
+                    rows={impactRows} 
+                    columns={impactColumns} 
+                    pageSize={5}
+                  />
+                </Box>
+              </Paper>
+            </Fade>
+          </Grid>
         </Grid>
-      </Grid>
+      </Container>
     </Box>
   );
 };

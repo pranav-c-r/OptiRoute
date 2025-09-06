@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   Grid, 
   Typography, 
@@ -6,7 +6,9 @@ import {
   Paper,
   useTheme,
   Tooltip,
-  IconButton
+  IconButton,
+  Fade,
+  Container
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
 import AssessmentIcon from '@mui/icons-material/Assessment';
@@ -21,6 +23,11 @@ import DataTable from '../components/shared/DataTable';
 
 const SmartShelterAllocation = () => {
   const theme = useTheme();
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    setIsLoaded(true);
+  }, []);
 
   // Sample data for housing demand forecast
   const housingDemandData = {
@@ -29,15 +36,15 @@ const SmartShelterAllocation = () => {
       {
         label: 'Predicted Housing Demand',
         data: [250, 280, 310, 330, 350, 370],
-        borderColor: theme.palette.primary.main,
-        backgroundColor: theme.palette.primary.main + '40',
+        borderColor: '#1976d2',
+        backgroundColor: 'rgba(25, 118, 210, 0.3)',
         fill: true,
       },
       {
         label: 'Available Units',
         data: [220, 240, 260, 290, 310, 330],
-        borderColor: theme.palette.secondary.main,
-        backgroundColor: theme.palette.secondary.main + '40',
+        borderColor: '#42a5f5',
+        backgroundColor: 'rgba(66, 165, 245, 0.3)',
         fill: true,
       }
     ]
@@ -98,171 +105,217 @@ const SmartShelterAllocation = () => {
   ];
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" sx={{ mb: 4 }}>
-        Smart Shelter Allocation System
-      </Typography>
-
-      <Grid container spacing={3}>
-        {/* Feature cards */}
-        <Grid item xs={12} md={6} lg={3}>
-          <DashboardCard 
-            title="Demand Forecasting" 
-            subtitle="AI predicts future housing needs"
-            icon={<AssessmentIcon />}
-          >
-            <Typography variant="body2" color="text.secondary">
-              Using migration, population, and income trends
+    <Box sx={{ 
+      p: 3,
+      background: '#0a1929',
+      minHeight: '100vh',
+      position: 'relative',
+      overflow: 'hidden'
+    }}>
+      {/* Animated background elements */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: `
+            radial-gradient(circle at 20% 20%, rgba(25, 118, 210, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba(66, 165, 245, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 40% 60%, rgba(25, 118, 210, 0.05) 0%, transparent 50%)
+          `,
+          pointerEvents: 'none',
+          zIndex: 0,
+        }}
+      />
+      
+      <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 1 }}>
+        <Fade in={isLoaded} timeout={800}>
+          <Box sx={{ textAlign: 'center', mb: 6 }}>
+            <Typography variant="h3" sx={{ 
+              mb: 2,
+              background: 'linear-gradient(45deg, #1976d2, #42a5f5)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              fontWeight: 700,
+              letterSpacing: '-0.02em'
+            }}>
+              Smart Shelter Allocation System
             </Typography>
-          </DashboardCard>
-        </Grid>
-
-        <Grid item xs={12} md={6} lg={3}>
-          <DashboardCard 
-            title="Dynamic Allocation" 
-            subtitle="ML reallocates units as needs change"
-            icon={<AutorenewIcon />}
-          >
-            <Typography variant="body2" color="text.secondary">
-              Adapts as families' needs or occupancy patterns change
+            <Typography variant="h6" sx={{ 
+              color: 'rgba(255, 255, 255, 0.8)',
+              fontWeight: 400,
+              maxWidth: '600px',
+              mx: 'auto'
+            }}>
+              AI-powered housing allocation and management system
             </Typography>
-          </DashboardCard>
-        </Grid>
+          </Box>
+        </Fade>
 
-        <Grid item xs={12} md={6} lg={3}>
-          <DashboardCard 
-            title="Needs-Based Prioritization" 
-            subtitle="AI ranks applicants by multiple factors"
-            icon={<PriorityHighIcon />}
-          >
-            <Typography variant="body2" color="text.secondary">
-              Considers vulnerability, family size, and proximity to essentials
-            </Typography>
-          </DashboardCard>
-        </Grid>
+        <Grid container spacing={4}>
+          {/* Feature cards */}
+          <Grid item xs={12} md={6} lg={3}>
+            <DashboardCard 
+              title="Demand Forecasting" 
+              subtitle="AI predicts future housing needs"
+              icon={<AssessmentIcon />}
+            >
+              <Typography variant="body2" color="text.secondary">
+                Using migration, population, and income trends
+              </Typography>
+            </DashboardCard>
+          </Grid>
 
-        <Grid item xs={12} md={6} lg={3}>
-          <DashboardCard 
-            title="Impact Optimization" 
-            subtitle="System simulates allocation scenarios"
-            icon={<TrendingUpIcon />}
-          >
-            <Typography variant="body2" color="text.secondary">
-              Maximizes occupancy, cuts waiting times, and improves satisfaction
-            </Typography>
-          </DashboardCard>
-        </Grid>
+          <Grid item xs={12} md={6} lg={3}>
+            <DashboardCard 
+              title="Dynamic Allocation" 
+              subtitle="ML reallocates units as needs change"
+              icon={<AutorenewIcon />}
+            >
+              <Typography variant="body2" color="text.secondary">
+                Adapts as families' needs or occupancy patterns change
+              </Typography>
+            </DashboardCard>
+          </Grid>
 
-        {/* Charts and tables */}
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2, height: '100%' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">Housing Demand Forecast</Typography>
-              <Tooltip title="AI predicts future housing needs using migration, population, and income trends">
-                <IconButton size="small">
-                  <InfoIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </Box>
-            <ChartComponent 
-              type="line" 
-              data={housingDemandData} 
-              options={{
-                scales: {
-                  y: {
-                    beginAtZero: true,
-                    title: {
-                      display: true,
-                      text: 'Housing Units'
-                    }
-                  }
-                }
-              }}
-            />
-          </Paper>
-        </Grid>
+          <Grid item xs={12} md={6} lg={3}>
+            <DashboardCard 
+              title="Needs-Based Prioritization" 
+              subtitle="AI ranks applicants by multiple factors"
+              icon={<PriorityHighIcon />}
+            >
+              <Typography variant="body2" color="text.secondary">
+                Considers vulnerability, family size, and proximity to essentials
+              </Typography>
+            </DashboardCard>
+          </Grid>
 
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2, height: '100%' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">Dynamic Unit Allocation</Typography>
-              <Tooltip title="ML reallocates units as families' needs or occupancy change">
-                <IconButton size="small">
-                  <InfoIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </Box>
-            <ChartComponent 
-              type="bar" 
-              data={dynamicAllocationData} 
-              options={{
-                scales: {
-                  y: {
-                    beginAtZero: true,
-                    title: {
-                      display: true,
-                      text: 'Number of Units'
-                    }
-                  }
-                }
-              }}
-            />
-          </Paper>
-        </Grid>
+          <Grid item xs={12} md={6} lg={3}>
+            <DashboardCard 
+              title="Impact Optimization" 
+              subtitle="System simulates allocation scenarios"
+              icon={<TrendingUpIcon />}
+            >
+              <Typography variant="body2" color="text.secondary">
+                Maximizes occupancy, cuts waiting times, and improves satisfaction
+              </Typography>
+            </DashboardCard>
+          </Grid>
 
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2, height: '100%' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">Needs-Based Prioritization</Typography>
-              <Tooltip title="AI ranks applicants by vulnerability, family size, and proximity to essentials">
-                <IconButton size="small">
-                  <InfoIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </Box>
-            <ChartComponent 
-              type="pie" 
-              data={prioritizationData} 
-              options={{
-                plugins: {
-                  legend: {
-                    position: 'right',
-                  },
-                  tooltip: {
-                    callbacks: {
-                      label: function(context) {
-                        const label = context.label || '';
-                        const value = context.raw || 0;
-                        return `${label}: ${(value * 100).toFixed(0)}%`;
+          {/* Charts and tables */}
+          <Grid item xs={12} md={6}>
+            <Paper sx={{ p: 2, height: '100%', minHeight: '280px', backgroundColor: '#273e6b', color: '#ffffff' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h6">Housing Demand Forecast</Typography>
+                <Tooltip title="AI predicts future housing needs using migration, population, and income trends">
+                  <IconButton size="small">
+                    <InfoIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+              <ChartComponent 
+                type="line" 
+                data={housingDemandData} 
+                options={{
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      title: {
+                        display: true,
+                        text: 'Housing Units'
                       }
                     }
                   }
-                }
-              }}
-            />
-          </Paper>
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2, height: '100%' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">Impact Optimization Scenarios</Typography>
-              <Tooltip title="The system simulates scenarios to maximize occupancy, cut waiting times, and improve community satisfaction">
-                <IconButton size="small">
-                  <InfoIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </Box>
-            <Box sx={{ height: 400 }}>
-              <DataTable 
-                rows={impactRows} 
-                columns={impactColumns} 
-                pageSize={5}
+                }}
               />
-            </Box>
-          </Paper>
+            </Paper>
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <Paper sx={{ p: 2, height: '100%', minHeight: '280px', backgroundColor: '#273e6b', color: '#ffffff' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h6">Dynamic Unit Allocation</Typography>
+                <Tooltip title="ML reallocates units as families' needs or occupancy change">
+                  <IconButton size="small">
+                    <InfoIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+              <ChartComponent 
+                type="bar" 
+                data={dynamicAllocationData} 
+                options={{
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      title: {
+                        display: true,
+                        text: 'Number of Units'
+                      }
+                    }
+                  }
+                }}
+              />
+            </Paper>
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <Paper sx={{ p: 2, height: '100%', minHeight: '280px', backgroundColor: '#273e6b', color: '#ffffff' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h6">Needs-Based Prioritization</Typography>
+                <Tooltip title="AI ranks applicants by vulnerability, family size, and proximity to essentials">
+                  <IconButton size="small">
+                    <InfoIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+              <ChartComponent 
+                type="pie" 
+                data={prioritizationData} 
+                options={{
+                  plugins: {
+                    legend: {
+                      position: 'right',
+                    },
+                    tooltip: {
+                      callbacks: {
+                        label: function(context) {
+                          const label = context.label || '';
+                          const value = context.raw || 0;
+                          return `${label}: ${(value * 100).toFixed(0)}%`;
+                        }
+                      }
+                    }
+                  }
+                }}
+              />
+            </Paper>
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <Paper sx={{ p: 2, height: '100%', minHeight: '280px', backgroundColor: '#273e6b', color: '#ffffff' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h6">Impact Optimization Scenarios</Typography>
+                <Tooltip title="The system simulates scenarios to maximize occupancy, cut waiting times, and improve community satisfaction">
+                  <IconButton size="small">
+                    <InfoIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+              <Box sx={{ height: 400 }}>
+                <DataTable 
+                  rows={impactRows} 
+                  columns={impactColumns} 
+                  pageSize={5}
+                />
+              </Box>
+            </Paper>
+          </Grid>
         </Grid>
-      </Grid>
+      </Container> {/* ✅ Properly closed Container */}
     </Box>
   );
 };

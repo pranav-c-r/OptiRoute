@@ -10,29 +10,149 @@ import {
   Fade,
   Slide,
   Zoom,
-  Container
+  Container,
+  Button,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Alert,
+  CircularProgress,
+  Chip
 } from '@mui/material';
-import InfoIcon from '@mui/icons-material/Info';
-import AssessmentIcon from '@mui/icons-material/Assessment';
-import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import {
+  Info as InfoIcon,
+  Assessment as AssessmentIcon,
+  LocalShipping as LocalShippingIcon,
+  AccessTime as AccessTimeIcon,
+  TrendingUp as TrendingUpIcon,
+  AutoAwesome as AutoAwesomeIcon,
+  Refresh as RefreshIcon
+} from '@mui/icons-material';
 
 // Import shared components
 import DashboardCard from '../components/shared/DashboardCard';
 import ChartComponent from '../components/shared/ChartComponent';
 import DataTable from '../components/shared/DataTable';
 
+// Import API service
+import { wasteOptimizerAPI, handleApiError } from '../services/api';
+
 const HungerWasteOptimizer = () => {
   const theme = useTheme();
   const [isLoaded, setIsLoaded] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  // API Data States
+  const [dashboardStats, setDashboardStats] = useState(null);
+  const [inventoryFlow, setInventoryFlow] = useState(null);
+  const [networkStatus, setNetworkStatus] = useState(null);
+  const [wasteReduction, setWasteReduction] = useState(null);
+  const [inventory, setInventory] = useState([]);
+  const [demand, setDemand] = useState([]);
+  const [logistics, setLogistics] = useState([]);
+  const [storage, setStorage] = useState([]);
+  const [farmers, setFarmers] = useState({});
+  
+  // AI Plan Generation
+  const [openPlanDialog, setOpenPlanDialog] = useState(false);
+  const [planForm, setPlanForm] = useState({
+    raw_report: '',
+    priority_focus: 'all'
+  });
+  const [generatedPlan, setGeneratedPlan] = useState(null);
+  const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
+    loadData();
     setIsLoaded(true);
   }, []);
 
-  // Real-time food bank inventory levels
-  const foodBankInventoryData = {
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const [
+        statsData,
+        inventoryFlowData,
+        networkStatusData,
+        wasteReductionData,
+        inventoryData,
+        demandData,
+        logisticsData,
+        storageData,
+        farmersData
+      ] = await Promise.all([
+        wasteOptimizerAPI.getDashboardStats(),
+        wasteOptimizerAPI.getInventoryFlow(),
+        wasteOptimizerAPI.getNetworkStatus(),
+        wasteOptimizerAPI.getWasteReduction(),
+        wasteOptimizerAPI.getInventory(),
+        wasteOptimizerAPI.getDemand(),
+        wasteOptimizerAPI.getLogistics(),
+        wasteOptimizerAPI.getStorage(),
+        wasteOptimizerAPI.getFarmers()
+      ]);
+      
+      setDashboardStats(statsData);
+      setInventoryFlow(inventoryFlowData);
+      setNetworkStatus(networkStatusData);
+      setWasteReduction(wasteReductionData);
+      setInventory(inventoryData);
+      setDemand(demandData);
+      setLogistics(logisticsData);
+      setStorage(storageData);
+      setFarmers(farmersData);
+    } catch (error) {
+      console.error('Error loading data:', error);
+      setError('Failed to load data. Please check if the backend server is running.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGeneratePlan = async () => {
+    try {
+      setGenerating(true);
+      const result = await wasteOptimizerAPI.generatePlan(planForm);
+      setGeneratedPlan(result);
+    } catch (error) {
+      handleApiError(error);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  // Process real-time food bank inventory levels from API
+  const foodBankInventoryData = inventoryFlow ? {
+    labels: inventoryFlow.days,
+    datasets: [
+      {
+        label: 'Food In (kg)',
+        data: inventoryFlow.food_in,
+        borderColor: '#1976d2',
+        backgroundColor: 'rgba(25, 118, 210, 0.3)',
+        fill: true,
+      },
+      {
+        label: 'Food Out (kg)',
+        data: inventoryFlow.food_out,
+        borderColor: '#42a5f5',
+        backgroundColor: 'rgba(66, 165, 245, 0.3)',
+        fill: true,
+      },
+      {
+        label: 'Waste (kg)',
+        data: inventoryFlow.waste,
+        borderColor: '#f44336',
+        backgroundColor: 'rgba(244, 67, 54, 0.3)',
+        fill: true,
+      }
+    ]
+  } : {
     labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
     datasets: [
       {
@@ -41,81 +161,85 @@ const HungerWasteOptimizer = () => {
         borderColor: '#1976d2',
         backgroundColor: 'rgba(25, 118, 210, 0.3)',
         fill: true,
-      },
-      {
-        label: 'Food Out (kg)',
-        data: [2200, 2800, 2600, 3000, 3500, 1600, 2000],
-        borderColor: '#42a5f5',
-        backgroundColor: 'rgba(66, 165, 245, 0.3)',
-        fill: true,
-      },
-      {
-        label: 'Waste (kg)',
-        data: [150, 200, 120, 180, 220, 100, 130],
-        borderColor: '#f44336',
-        backgroundColor: 'rgba(244, 67, 54, 0.3)',
-        fill: true,
       }
     ]
   };
 
-  // Food bank network distribution
-  const foodBankNetworkData = {
-    labels: ['Central Food Bank', 'North Branch', 'South Hub', 'East Center', 'West Station'],
+  // Process food bank network distribution from API
+  const foodBankNetworkData = networkStatus ? {
+    labels: networkStatus.locations,
     datasets: [
       {
         label: 'Current Inventory (kg)',
-        data: [2500, 1800, 2200, 1600, 2000],
+        data: networkStatus.current_inventory,
         backgroundColor: '#1976d2',
       },
       {
         label: 'Daily Distribution (kg)',
-        data: [800, 600, 700, 500, 650],
+        data: networkStatus.daily_distribution,
         backgroundColor: '#42a5f5',
       },
       {
         label: 'Surplus Available (kg)',
-        data: [300, 200, 250, 150, 180],
+        data: networkStatus.surplus_available,
         backgroundColor: '#4caf50',
+      }
+    ]
+  } : {
+    labels: ['No Data'],
+    datasets: [
+      {
+        label: 'Current Inventory (kg)',
+        data: [0],
+        backgroundColor: '#666',
       }
     ]
   };
 
-  // Food waste reduction by category
-  const wasteReductionData = {
+  // Process food waste reduction data from API
+  const wasteReductionData = wasteReduction ? {
+    labels: wasteReduction.categories,
+    datasets: [
+      {
+        label: 'Waste Before (kg/week)',
+        data: wasteReduction.waste_before,
+        backgroundColor: '#f44336',
+      },
+      {
+        label: 'Waste After (kg/week)',
+        data: wasteReduction.waste_after,
+        backgroundColor: '#4caf50',
+      }
+    ]
+  } : {
     labels: ['Vegetables', 'Fruits', 'Dairy', 'Meat', 'Bakery', 'Prepared Meals'],
     datasets: [
       {
         label: 'Waste Before (kg/week)',
         data: [150, 120, 80, 60, 90, 110],
         backgroundColor: '#f44336',
-      },
-      {
-        label: 'Waste After (kg/week)',
-        data: [45, 36, 24, 18, 27, 33],
-        backgroundColor: '#4caf50',
       }
     ]
   };
 
-  // Food distribution routes and delivery status
+  // Process delivery routes data from API
   const deliveryRoutesColumns = [
     { field: 'id', headerName: 'ID', width: 70 },
-    { field: 'route', headerName: 'Delivery Route', width: 200 },
-    { field: 'foodBank', headerName: 'From Food Bank', width: 180 },
-    { field: 'destination', headerName: 'Destination', width: 180 },
-    { field: 'foodWeight', headerName: 'Food Weight (kg)', width: 150, type: 'number' },
-    { field: 'estimatedTime', headerName: 'Est. Delivery Time', width: 150 },
+    { field: 'vehicle_type', headerName: 'Vehicle Type', width: 150 },
+    { field: 'location', headerName: 'Current Location', width: 180 },
+    { field: 'capacity_kg', headerName: 'Capacity (kg)', width: 120, type: 'number' },
     { field: 'status', headerName: 'Status', width: 120 },
+    { field: 'cost_per_km', headerName: 'Cost/km', width: 100 },
   ];
 
-  const deliveryRoutesRows = [
-    { id: 1, route: 'Route A-1', foodBank: 'Central Food Bank', destination: 'Downtown Shelter', foodWeight: 250, estimatedTime: '45 min', status: 'In Transit' },
-    { id: 2, route: 'Route B-2', foodBank: 'North Branch', destination: 'Community Center', foodWeight: 180, estimatedTime: '30 min', status: 'Delivered' },
-    { id: 3, route: 'Route C-3', foodBank: 'South Hub', destination: 'Senior Center', foodWeight: 320, estimatedTime: '60 min', status: 'Scheduled' },
-    { id: 4, route: 'Route D-4', foodBank: 'East Center', destination: 'Family Shelter', foodWeight: 200, estimatedTime: '35 min', status: 'In Transit' },
-    { id: 5, route: 'Route E-5', foodBank: 'West Station', destination: 'School Program', foodWeight: 150, estimatedTime: '25 min', status: 'Delivered' },
-  ];
+  const deliveryRoutesRows = logistics.map((logistic, index) => ({
+    id: logistic.id,
+    vehicle_type: logistic.vehicle_type,
+    location: logistic.location,
+    capacity_kg: logistic.capacity_kg,
+    status: logistic.status,
+    cost_per_km: `₹${logistic.cost_per_km}`
+  }));
 
   return (
     <Box sx={{ 
@@ -161,10 +285,81 @@ const HungerWasteOptimizer = () => {
               color: 'rgba(255, 255, 255, 0.8)',
               fontWeight: 400,
               maxWidth: '600px',
-              mx: 'auto'
+              mx: 'auto',
+              mb: 3
             }}>
               Smart food distribution and waste reduction system
             </Typography>
+            
+            {/* Action Buttons */}
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mb: 3 }}>
+              <Button
+                variant="contained"
+                startIcon={<AutoAwesomeIcon />}
+                onClick={() => setOpenPlanDialog(true)}
+                sx={{ 
+                  background: 'linear-gradient(45deg, #1976d2, #42a5f5)',
+                  '&:hover': {
+                    background: 'linear-gradient(45deg, #1565c0, #1976d2)'
+                  }
+                }}
+              >
+                Generate AI Plan
+              </Button>
+              <Button
+                variant="outlined"
+                startIcon={<RefreshIcon />}
+                onClick={loadData}
+                sx={{ 
+                  borderColor: 'rgba(255,255,255,0.3)',
+                  color: 'white',
+                  '&:hover': {
+                    borderColor: 'white',
+                    backgroundColor: 'rgba(255,255,255,0.1)'
+                  }
+                }}
+              >
+                Refresh Data
+              </Button>
+            </Box>
+
+            {/* Error Alert */}
+            {error && (
+              <Alert severity="error" sx={{ mb: 3, maxWidth: '600px', mx: 'auto' }}>
+                {error}
+              </Alert>
+            )}
+
+            {/* Loading Indicator */}
+            {loading && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+                <CircularProgress sx={{ color: '#1976d2' }} />
+              </Box>
+            )}
+
+            {/* Dashboard Stats */}
+            {dashboardStats && (
+              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mb: 3, flexWrap: 'wrap' }}>
+                <Chip 
+                  label={`${dashboardStats.total_inventory_kg}kg Inventory`} 
+                  color="primary" 
+                  variant="outlined"
+                  sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.3)' }}
+                />
+                <Chip 
+                  label={`${dashboardStats.utilization_rate}% Utilization`} 
+                  color="secondary" 
+                  variant="outlined"
+                  sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.3)' }}
+                />
+                <Chip 
+                  label={`${dashboardStats.available_vehicles} Vehicles`} 
+                  color="success" 
+                  variant="outlined"
+                  sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.3)' }}
+                />
+              </Box>
+            )}
           </Box>
         </Fade>
 
@@ -579,6 +774,112 @@ const HungerWasteOptimizer = () => {
           </Grid>
         </Grid>
       </Container>
+
+      {/* AI Plan Generation Dialog */}
+      <Dialog open={openPlanDialog} onClose={() => setOpenPlanDialog(false)} maxWidth="lg" fullWidth>
+        <DialogTitle>Generate AI-Powered Allocation Plan</DialogTitle>
+        <DialogContent>
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                multiline
+                rows={4}
+                label="Food Surplus and Demand Report"
+                value={planForm.raw_report}
+                onChange={(e) => setPlanForm(prev => ({ ...prev, raw_report: e.target.value }))}
+                placeholder="Describe the current food surplus situation, demand signals, and any specific requirements..."
+                helperText="Provide detailed information about available food, locations, quantities, and community needs"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                select
+                label="Priority Focus"
+                value={planForm.priority_focus}
+                onChange={(e) => setPlanForm(prev => ({ ...prev, priority_focus: e.target.value }))}
+                SelectProps={{
+                  native: true,
+                }}
+              >
+                <option value="all">All Priorities</option>
+                <option value="hunger_relief">Hunger Relief</option>
+                <option value="farmer_support">Farmer Support</option>
+                <option value="environment">Environmental Impact</option>
+              </TextField>
+            </Grid>
+          </Grid>
+
+          {/* Generated Plan Results */}
+          {generatedPlan && (
+            <Box sx={{ mt: 3 }}>
+              <Typography variant="h6" sx={{ mb: 2, color: 'primary.main' }}>
+                AI-Generated Allocation Plan:
+              </Typography>
+              
+              <Paper sx={{ p: 2, mb: 2, backgroundColor: '#f5f5f5' }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                  Allocation Plan:
+                </Typography>
+                <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                  {generatedPlan.allocation_plan}
+                </Typography>
+              </Paper>
+
+              <Paper sx={{ p: 2, mb: 2, backgroundColor: '#e3f2fd' }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                  Human Summary:
+                </Typography>
+                <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                  {generatedPlan.human_summary}
+                </Typography>
+              </Paper>
+
+              {generatedPlan.estimated_impact && (
+                <Paper sx={{ p: 2, backgroundColor: '#e8f5e8' }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                    Estimated Impact:
+                  </Typography>
+                  <Grid container spacing={1}>
+                    <Grid item xs={6} sm={3}>
+                      <Typography variant="body2">
+                        <strong>People Served:</strong> {generatedPlan.estimated_impact.people_served}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={6} sm={3}>
+                      <Typography variant="body2">
+                        <strong>Food Saved:</strong> {generatedPlan.estimated_impact.food_saved_kg}kg
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={6} sm={3}>
+                      <Typography variant="body2">
+                        <strong>Economic Value:</strong> ₹{generatedPlan.estimated_impact.economic_value_rupees}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={6} sm={3}>
+                      <Typography variant="body2">
+                        <strong>Emissions Saved:</strong> {generatedPlan.estimated_impact.emissions_saved_kg}kg CO2
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                </Paper>
+              )}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenPlanDialog(false)}>Cancel</Button>
+          <Button 
+            onClick={handleGeneratePlan} 
+            variant="contained"
+            disabled={generating || !planForm.raw_report.trim()}
+            startIcon={generating ? <CircularProgress size={20} /> : <AutoAwesomeIcon />}
+          >
+            {generating ? 'Generating Plan...' : 'Generate Plan'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

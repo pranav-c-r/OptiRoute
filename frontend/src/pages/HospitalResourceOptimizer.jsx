@@ -11,29 +11,123 @@ import {
   Slide,
   Zoom,
   Container,
-  alpha
+  alpha,
+  Button,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Alert,
+  CircularProgress
 } from '@mui/material';
-import InfoIcon from '@mui/icons-material/Info';
-import BedIcon from '@mui/icons-material/Bed';
-import RouteIcon from '@mui/icons-material/Route';
-import PeopleIcon from '@mui/icons-material/People';
-import WarningIcon from '@mui/icons-material/Warning';
+import {
+  Info as InfoIcon,
+  Bed as BedIcon,
+  Route as RouteIcon,
+  People as PeopleIcon,
+  Warning as WarningIcon,
+  Add as AddIcon,
+  Search as SearchIcon
+} from '@mui/icons-material';
 
 // Import shared components
 import DashboardCard from '../components/shared/DashboardCard';
 import ChartComponent from '../components/shared/ChartComponent';
 import DataTable from '../components/shared/DataTable';
 
+// Import API service
+import { hospitalAPI, handleApiError } from '../services/api';
+
 const HospitalResourceOptimizer = () => {
   const theme = useTheme();
   const [isLoaded, setIsLoaded] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  // API Data States
+  const [dashboardStats, setDashboardStats] = useState(null);
+  const [occupancyTrends, setOccupancyTrends] = useState(null);
+  const [specialtyDistribution, setSpecialtyDistribution] = useState(null);
+  const [hospitals, setHospitals] = useState([]);
+  const [doctors, setDoctors] = useState([]);
+  const [patients, setPatients] = useState([]);
+  
+  // Patient Search Dialog
+  const [openPatientDialog, setOpenPatientDialog] = useState(false);
+  const [patientForm, setPatientForm] = useState({
+    patient_lon: 0,
+    patient_lat: 0,
+    severity: 1
+  });
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
 
   useEffect(() => {
+    loadData();
     setIsLoaded(true);
   }, []);
 
-  // Real-time bed occupancy data
-  const bedOccupancyData = {
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const [
+        statsData,
+        trendsData,
+        specialtyData,
+        hospitalsData,
+        doctorsData,
+        patientsData
+      ] = await Promise.all([
+        hospitalAPI.getDashboardStats(),
+        hospitalAPI.getOccupancyTrends(),
+        hospitalAPI.getSpecialtyDistribution(),
+        hospitalAPI.getHospitals(),
+        hospitalAPI.getDoctors(),
+        hospitalAPI.getPatients()
+      ]);
+      
+      setDashboardStats(statsData);
+      setOccupancyTrends(trendsData);
+      setSpecialtyDistribution(specialtyData);
+      setHospitals(hospitalsData.hospitals || []);
+      setDoctors(doctorsData.doctors || []);
+      setPatients(patientsData.patients || []);
+    } catch (error) {
+      console.error('Error loading data:', error);
+      setError('Failed to load data. Please check if the backend server is running.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePatientSearch = async () => {
+    try {
+      setSearching(true);
+      const results = await hospitalAPI.findHospital(patientForm);
+      setSearchResults(results);
+    } catch (error) {
+      handleApiError(error);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  // Process real-time bed occupancy data from API
+  const bedOccupancyData = occupancyTrends ? {
+    labels: occupancyTrends.hours,
+    datasets: [
+      {
+        label: 'Occupancy %',
+        data: occupancyTrends.occupancy_percentages,
+        borderColor: '#1976d2',
+        backgroundColor: 'rgba(25, 118, 210, 0.3)',
+        fill: true,
+      }
+    ]
+  } : {
     labels: ['6 AM', '9 AM', '12 PM', '3 PM', '6 PM', '9 PM', '12 AM'],
     datasets: [
       {
@@ -42,89 +136,105 @@ const HospitalResourceOptimizer = () => {
         borderColor: '#1976d2',
         backgroundColor: 'rgba(25, 118, 210, 0.3)',
         fill: true,
-      },
-      {
-        label: 'ICU Beds',
-        data: [45, 50, 55, 60, 58, 52, 48],
-        borderColor: '#42a5f5',
-        backgroundColor: 'rgba(66, 165, 245, 0.3)',
-        fill: true,
       }
     ]
   };
 
-  // Nearest hospitals with real data
-  const nearestHospitalsData = {
-    labels: ['City General', 'Metro Medical', 'Regional Health', 'University Hosp', 'Community Med'],
+  // Process hospitals data from API
+  const nearestHospitalsData = hospitals.length > 0 ? {
+    labels: hospitals.slice(0, 5).map(h => h.name),
     datasets: [
       {
         label: 'Available Beds',
-        data: [12, 8, 15, 5, 20],
+        data: hospitals.slice(0, 5).map(h => h.available_beds),
         backgroundColor: [
           '#1976d2',
           '#42a5f5',
-          '#1976d2',
-          '#f44336',
           '#4caf50',
+          '#ff9800',
+          '#f44336',
         ],
+      }
+    ]
+  } : {
+    labels: ['No Data'],
+    datasets: [
+      {
+        label: 'Available Beds',
+        data: [0],
+        backgroundColor: ['#666'],
       }
     ]
   };
 
-  // Staff scheduling by department
-  const staffSchedulingData = {
+  // Process staff scheduling data from API
+  const staffSchedulingData = specialtyDistribution ? {
+    labels: specialtyDistribution.specialties,
+    datasets: [
+      {
+        label: 'Doctors',
+        data: specialtyDistribution.counts,
+        backgroundColor: '#1976d2',
+      }
+    ]
+  } : {
     labels: ['Emergency', 'ICU', 'Surgery', 'Cardiology', 'Pediatrics'],
     datasets: [
       {
-        label: 'Nurses',
-        data: [8, 6, 4, 5, 7],
-        backgroundColor: '#1976d2',
-      },
-      {
         label: 'Doctors',
         data: [3, 2, 4, 2, 3],
-        backgroundColor: '#42a5f5',
+        backgroundColor: '#1976d2',
       }
     ]
   };
 
   // Hospital details table data
   const hospitalDetailsColumns = [
-    { field: 'id', headerName: 'ID', width: 70 },
+    { field: 'hospital_id', headerName: 'ID', width: 100 },
     { field: 'name', headerName: 'Hospital Name', width: 200 },
-    { field: 'distance', headerName: 'Distance', width: 100 },
-    { field: 'availableBeds', headerName: 'Available Beds', width: 130, type: 'number' },
-    { field: 'icuBeds', headerName: 'ICU Beds', width: 100, type: 'number' },
-    { field: 'waitTime', headerName: 'Wait Time', width: 120 },
+    { field: 'available_beds', headerName: 'Available Beds', width: 130, type: 'number' },
+    { field: 'total_beds', headerName: 'Total Beds', width: 100, type: 'number' },
+    { field: 'available_icu_beds', headerName: 'ICU Beds', width: 100, type: 'number' },
+    { field: 'occupancy_rate', headerName: 'Occupancy %', width: 120 },
     { field: 'status', headerName: 'Status', width: 120 },
   ];
 
-  const hospitalDetailsRows = [
-    { id: 1, name: 'City General Hospital', distance: '2.3 km', availableBeds: 12, icuBeds: 3, waitTime: '15 min', status: 'Available' },
-    { id: 2, name: 'Metro Medical Center', distance: '4.1 km', availableBeds: 8, icuBeds: 1, waitTime: '25 min', status: 'Limited' },
-    { id: 3, name: 'Regional Health Center', distance: '6.7 km', availableBeds: 15, icuBeds: 4, waitTime: '35 min', status: 'Available' },
-    { id: 4, name: 'University Hospital', distance: '8.2 km', availableBeds: 5, icuBeds: 2, waitTime: '45 min', status: 'Full' },
-    { id: 5, name: 'Community Medical', distance: '9.5 km', availableBeds: 20, icuBeds: 6, waitTime: '50 min', status: 'Available' }
-  ];
+  const hospitalDetailsRows = hospitals.map((hospital, index) => {
+    const occupancyRate = ((hospital.total_beds - hospital.available_beds) / hospital.total_beds * 100).toFixed(1);
+    return {
+      id: hospital.hospital_id,
+      hospital_id: hospital.hospital_id,
+      name: hospital.name,
+      available_beds: hospital.available_beds,
+      total_beds: hospital.total_beds,
+      available_icu_beds: hospital.available_icu_beds,
+      occupancy_rate: `${occupancyRate}%`,
+      status: occupancyRate > 90 ? 'Full' : occupancyRate > 70 ? 'Limited' : 'Available'
+    };
+  });
 
   // Emergency alerts and critical cases
   const emergencyAlertsColumns = [
-    { field: 'id', headerName: 'ID', width: 70 },
-    { field: 'patientId', headerName: 'Patient ID', width: 100 },
-    { field: 'condition', headerName: 'Condition', width: 150 },
+    { field: 'patient_id', headerName: 'Patient ID', width: 100 },
+    { field: 'severity', headerName: 'Severity', width: 100 },
+    { field: 'location', headerName: 'Location', width: 150 },
     { field: 'priority', headerName: 'Priority', width: 100 },
-    { field: 'waitTime', headerName: 'Wait Time', width: 120 },
-    { field: 'assignedDoctor', headerName: 'Assigned Doctor', width: 150 },
+    { field: 'created_at', headerName: 'Created', width: 150 },
     { field: 'status', headerName: 'Status', width: 120 },
   ];
 
-  const emergencyAlertsRows = [
-    { id: 1, patientId: 'P001234', condition: 'Chest Pain', priority: 'Critical', waitTime: '5 min', assignedDoctor: 'Dr. Smith', status: 'In Treatment' },
-    { id: 2, patientId: 'P001235', condition: 'Stroke Symptoms', priority: 'Critical', waitTime: '2 min', assignedDoctor: 'Dr. Johnson', status: 'In Treatment' },
-    { id: 3, patientId: 'P001236', condition: 'Severe Trauma', priority: 'High', waitTime: '8 min', assignedDoctor: 'Dr. Brown', status: 'Waiting' },
-    { id: 4, patientId: 'P001237', condition: 'Heart Attack', priority: 'Critical', waitTime: '1 min', assignedDoctor: 'Dr. Davis', status: 'In Treatment' },
-    { id: 5, patientId: 'P001238', condition: 'Respiratory Distress', priority: 'High', waitTime: '12 min', assignedDoctor: 'Dr. Wilson', status: 'Waiting' },
-  ];
+  const emergencyAlertsRows = patients.map((patient, index) => {
+    const priority = patient.severity >= 4 ? 'Critical' : patient.severity >= 3 ? 'High' : 'Medium';
+    return {
+      id: patient.patient_id,
+      patient_id: patient.patient_id,
+      severity: patient.severity,
+      location: `${patient.patient_lat.toFixed(4)}, ${patient.patient_lon.toFixed(4)}`,
+      priority: priority,
+      created_at: new Date(patient.created_at).toLocaleString(),
+      status: patient.status
+    };
+  });
 
   return (
     <Box sx={{ 
@@ -170,10 +280,57 @@ const HospitalResourceOptimizer = () => {
               color: 'rgba(255, 255, 255, 0.8)',
               fontWeight: 400,
               maxWidth: '600px',
-              mx: 'auto'
+              mx: 'auto',
+              mb: 3
             }}>
               Advanced machine learning algorithms for optimal hospital resource management
             </Typography>
+            
+            {/* Action Buttons */}
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mb: 3 }}>
+              <Button
+                variant="contained"
+                startIcon={<SearchIcon />}
+                onClick={() => setOpenPatientDialog(true)}
+                sx={{ 
+                  background: 'linear-gradient(45deg, #1976d2, #42a5f5)',
+                  '&:hover': {
+                    background: 'linear-gradient(45deg, #1565c0, #1976d2)'
+                  }
+                }}
+              >
+                Find Hospital for Patient
+              </Button>
+              <Button
+                variant="outlined"
+                startIcon={<AddIcon />}
+                onClick={loadData}
+                sx={{ 
+                  borderColor: 'rgba(255,255,255,0.3)',
+                  color: 'white',
+                  '&:hover': {
+                    borderColor: 'white',
+                    backgroundColor: 'rgba(255,255,255,0.1)'
+                  }
+                }}
+              >
+                Refresh Data
+              </Button>
+            </Box>
+
+            {/* Error Alert */}
+            {error && (
+              <Alert severity="error" sx={{ mb: 3, maxWidth: '600px', mx: 'auto' }}>
+                {error}
+              </Alert>
+            )}
+
+            {/* Loading Indicator */}
+            {loading && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+                <CircularProgress sx={{ color: '#1976d2' }} />
+              </Box>
+            )}
           </Box>
         </Fade>
 
@@ -634,6 +791,81 @@ const HospitalResourceOptimizer = () => {
           </Grid>
         </Grid>
       </Container>
+
+      {/* Patient Search Dialog */}
+      <Dialog open={openPatientDialog} onClose={() => setOpenPatientDialog(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Find Hospital for Patient</DialogTitle>
+        <DialogContent>
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Patient Latitude"
+                type="number"
+                value={patientForm.patient_lat}
+                onChange={(e) => setPatientForm(prev => ({ ...prev, patient_lat: parseFloat(e.target.value) }))}
+                helperText="Enter patient's latitude coordinate"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Patient Longitude"
+                type="number"
+                value={patientForm.patient_lon}
+                onChange={(e) => setPatientForm(prev => ({ ...prev, patient_lon: parseFloat(e.target.value) }))}
+                helperText="Enter patient's longitude coordinate"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Severity Level"
+                type="number"
+                value={patientForm.severity}
+                onChange={(e) => setPatientForm(prev => ({ ...prev, severity: parseInt(e.target.value) }))}
+                helperText="1-5 scale (1=low, 5=critical)"
+                inputProps={{ min: 1, max: 5 }}
+              />
+            </Grid>
+          </Grid>
+
+          {/* Search Results */}
+          {searchResults.length > 0 && (
+            <Box sx={{ mt: 3 }}>
+              <Typography variant="h6" sx={{ mb: 2, color: 'primary.main' }}>
+                Recommended Hospitals:
+              </Typography>
+              {searchResults.map((hospital, index) => (
+                <Paper key={index} sx={{ p: 2, mb: 2, border: '1px solid #e0e0e0' }}>
+                  <Typography variant="h6" sx={{ color: 'primary.main' }}>
+                    {hospital.hospital_name}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+                    Distance: {hospital.distance_km} km | 
+                    Available Beds: {hospital.predicted_beds_available} | 
+                    Suitability Score: {(hospital.suitability_score * 100).toFixed(1)}%
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                    Location: {hospital.hospital_latitude.toFixed(4)}, {hospital.hospital_longitude.toFixed(4)}
+                  </Typography>
+                </Paper>
+              ))}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenPatientDialog(false)}>Cancel</Button>
+          <Button 
+            onClick={handlePatientSearch} 
+            variant="contained"
+            disabled={searching}
+            startIcon={searching ? <CircularProgress size={20} /> : <SearchIcon />}
+          >
+            {searching ? 'Searching...' : 'Find Hospital'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

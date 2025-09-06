@@ -12,11 +12,13 @@ import {
   Zoom,
   Container
 } from '@mui/material';
-import InfoIcon from '@mui/icons-material/Info';
-import AssessmentIcon from '@mui/icons-material/Assessment';
-import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import LoopIcon from '@mui/icons-material/Loop';
-import CellTowerIcon from '@mui/icons-material/CellTower';
+import {
+  Info as InfoIcon,
+  Assessment as AssessmentIcon,
+  LocalShipping as LocalShippingIcon,
+  Loop as LoopIcon,
+  CellTower as CellTowerIcon
+} from '@mui/icons-material';
 
 // Import shared components
 import DashboardCard from '../components/shared/DashboardCard';

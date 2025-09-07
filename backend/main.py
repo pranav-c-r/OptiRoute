@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from hospital_allocation.routes import router as hospital_router
-
+from shelter_allocation.routes import router as shelter_router
 # Dynamically import waste-optimizer.routes as waste_optimizer_router
 import sys
 import importlib.util
@@ -36,6 +36,8 @@ app.include_router(hospital_router, prefix="/hospital", tags=["HospitalAllocatio
 
 # Include the new waste optimizer router
 app.include_router(waste_optimizer_router, prefix="/waste-optimizer", tags=["WasteOptimizer"])
+
+app.include_router(shelter_router, prefix="/shelter", tags=["ShelterAllocation"])
 
 @app.get("/")
 def root():

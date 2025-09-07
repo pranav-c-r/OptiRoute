@@ -21,6 +21,11 @@ import DisasterReliefOptimizer from './pages/DisasterReliefOptimizer';
 import HungerWasteOptimizer from './pages/HungerWasteOptimizer';
 import SmartShelterAllocation from './pages/SmartShelterAllocation';
 
+// Import role-specific components
+import DoctorDashboard from './components/role/DoctorDashboard';
+import HospitalAdminDashboard from './components/role/HospitalAdminDashboard';
+import DemandForecasting from './components/DemandForecasting';
+
 function App() {
   return (
     <ThemeProvider theme={theme}>
@@ -49,7 +54,6 @@ function App() {
               </ProtectedRoute>
             } />
             
-            {/* All authenticated users can access all pages */}
             <Route path="/hospital-optimizer" element={
               <ProtectedRoute>
                 <Layout>
@@ -82,8 +86,30 @@ function App() {
               </ProtectedRoute>
             } />
             
-          
+            {/* Role-specific routes */}
+            <Route path="/doctor-dashboard" element={
+              <ProtectedRoute allowedRoles={["doctor"]}>
+                <Layout>
+                  <DoctorDashboard />
+                </Layout>
+              </ProtectedRoute>
+            } />
             
+            <Route path="/hospital-admin" element={
+              <ProtectedRoute allowedRoles={["hospital_admin"]}>
+                <Layout>
+                  <HospitalAdminDashboard />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/demand-forecasting" element={
+              <ProtectedRoute>
+                <Layout>
+                  <DemandForecasting />
+                </Layout>
+              </ProtectedRoute>
+            } />
             
           </Routes>
         </Router>

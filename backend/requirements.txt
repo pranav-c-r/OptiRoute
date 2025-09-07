@@ -11,3 +11,4 @@ langchain-core
 langchain
 aiohttp
 requests
+huggingface-hub

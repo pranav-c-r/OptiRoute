@@ -13,17 +13,22 @@ import {
   useMediaQuery
 } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 // Icons
-import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
-import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
-import RestaurantIcon from '@mui/icons-material/Restaurant';
-import HomeIcon from '@mui/icons-material/Home';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import SettingsIcon from '@mui/icons-material/Settings';
-import HelpIcon from '@mui/icons-material/Help';
-import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
-import AssignmentIcon from '@mui/icons-material/Assignment';
+import {
+  LocalHospital as LocalHospitalIcon,
+  VolunteerActivism as VolunteerActivismIcon,
+  Restaurant as RestaurantIcon,
+  Home as HomeIcon,
+  Dashboard as DashboardIcon,
+  Settings as SettingsIcon,
+  Help as HelpIcon,
+  MedicalServices as MedicalServicesIcon,
+  Assignment as AssignmentIcon,
+  Person as PersonIcon,
+  AdminPanelSettings as AdminPanelSettingsIcon
+} from '@mui/icons-material';
 
 const drawerWidth = 240;
 
@@ -32,6 +37,7 @@ const Sidebar = ({ open, handleDrawerToggle }) => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   
   const mainMenuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
@@ -39,7 +45,26 @@ const Sidebar = ({ open, handleDrawerToggle }) => {
     { text: 'Disaster Relief Optimizer', icon: <VolunteerActivismIcon />, path: '/disaster-relief' },
     { text: 'Hunger & Waste Optimizer', icon: <RestaurantIcon />, path: '/hunger-waste' },
     { text: 'Smart Shelter Allocation', icon: <HomeIcon />, path: '/shelter-allocation' },
-  ]
+  ];
+
+  // Role-specific menu items
+  const roleSpecificItems = [];
+  
+  if (user?.role === 'doctor') {
+    roleSpecificItems.push({
+      text: 'Doctor Dashboard',
+      icon: <PersonIcon />,
+      path: '/doctor-dashboard'
+    });
+  }
+  
+  if (user?.role === 'hospital_admin') {
+    roleSpecificItems.push({
+      text: 'Hospital Admin',
+      icon: <AdminPanelSettingsIcon />,
+      path: '/hospital-admin'
+    });
+  }
   
   const secondaryMenuItems = [
     { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
@@ -108,6 +133,52 @@ const Sidebar = ({ open, handleDrawerToggle }) => {
               </ListItemButton>
             </ListItem>
           ))}
+          
+          {/* Role-specific items */}
+          {roleSpecificItems.length > 0 && (
+            <>
+              <Divider sx={{ my: 1 }} />
+              <Box sx={{ px: 2, py: 1 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 'medium' }}>
+                  Role-Specific
+                </Typography>
+              </Box>
+              {roleSpecificItems.map((item) => (
+                <ListItem key={item.text} disablePadding>
+                  <ListItemButton 
+                    onClick={() => handleNavigation(item.path)}
+                    selected={location.pathname === item.path}
+                    sx={{
+                      '&.Mui-selected': {
+                        backgroundColor: 'rgba(25, 118, 210, 0.12)',
+                        borderRight: `3px solid ${theme.palette.primary.main}`,
+                        '&:hover': {
+                          backgroundColor: 'rgba(25, 118, 210, 0.18)',
+                        },
+                      },
+                      '&:hover': {
+                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                      },
+                    }}
+                  >
+                    <ListItemIcon sx={{ 
+                      color: location.pathname === item.path ? theme.palette.primary.main : theme.palette.text.secondary,
+                      minWidth: 40 
+                    }}>
+                      {item.icon}
+                    </ListItemIcon>
+                    <ListItemText 
+                      primary={item.text} 
+                      primaryTypographyProps={{
+                        fontSize: '0.9rem',
+                        fontWeight: location.pathname === item.path ? 'medium' : 'normal',
+                      }}
+                    />
+                  </ListItemButton>
+                </ListItem>
+              ))}
+            </>
+          )}
         </List>
         
         <Divider />

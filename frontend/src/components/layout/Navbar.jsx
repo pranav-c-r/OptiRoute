@@ -14,12 +14,14 @@ import {
   Chip,
   Divider
 } from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
-import NotificationsIcon from '@mui/icons-material/Notifications';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-import SettingsIcon from '@mui/icons-material/Settings';
-import LogoutIcon from '@mui/icons-material/Logout';
+import {
+  Menu as MenuIcon,
+  Notifications as NotificationsIcon,
+  AccountCircle as AccountCircleIcon,
+  HelpOutline as HelpOutlineIcon,
+  Settings as SettingsIcon,
+  Logout as LogoutIcon
+} from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 

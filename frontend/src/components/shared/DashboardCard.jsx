@@ -1,10 +1,6 @@
 import React from 'react';
-<<<<<<< HEAD
-import { Card, CardContent, CardHeader, Typography, Box, IconButton, Tooltip } from '@mui/material';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-=======
 import { Card, CardContent, CardHeader, Typography, Box, IconButton, Tooltip, alpha } from '@mui/material';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import { InfoOutlined as InfoOutlinedIcon } from '@mui/icons-material';
 import { keyframes } from '@mui/system';
 
 // Animation keyframes
@@ -28,7 +24,6 @@ const pulseGlow = keyframes`
     box-shadow: 0 0 0 0 rgba(25, 118, 210, 0);
   }
 `;
->>>>>>> d22fdf744dc57d2094730760d709dab5b02162c1
 
 const DashboardCard = ({ 
   title, 
@@ -37,11 +32,8 @@ const DashboardCard = ({
   icon, 
   tooltipText,
   headerAction,
-<<<<<<< HEAD
-=======
   gradient,
   animation,
->>>>>>> d22fdf744dc57d2094730760d709dab5b02162c1
   sx = {}
 }) => {
   return (
@@ -51,9 +43,6 @@ const DashboardCard = ({
         height: '100%', 
         display: 'flex', 
         flexDirection: 'column',
-<<<<<<< HEAD
-        borderRadius: 2,
-=======
         borderRadius: 3,
         background: gradient || 'rgba(39, 62, 107, 0.9)',
         backdropFilter: 'blur(10px)',
@@ -85,21 +74,11 @@ const DashboardCard = ({
             opacity: 1,
           },
         },
->>>>>>> d22fdf744dc57d2094730760d709dab5b02162c1
         ...sx
       }}
     >
       <CardHeader
         title={
-<<<<<<< HEAD
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            {icon && (
-              <Box sx={{ mr: 1, display: 'flex', alignItems: 'center' }}>
-                {icon}
-              </Box>
-            )}
-            <Typography variant="h6" component="div">
-=======
           <Box sx={{ display: 'flex', alignItems: 'center', position: 'relative', zIndex: 1 }}>
             {icon && (
               <Box sx={{ 
@@ -131,14 +110,10 @@ const DashboardCard = ({
                 textShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
               }}
             >
->>>>>>> d22fdf744dc57d2094730760d709dab5b02162c1
               {title}
             </Typography>
             {tooltipText && (
               <Tooltip title={tooltipText} arrow placement="top">
-<<<<<<< HEAD
-                <IconButton size="small" sx={{ ml: 0.5 }}>
-=======
                 <IconButton 
                   size="small" 
                   sx={{ 
@@ -151,7 +126,6 @@ const DashboardCard = ({
                     }
                   }}
                 >
->>>>>>> d22fdf744dc57d2094730760d709dab5b02162c1
                   <InfoOutlinedIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
@@ -159,9 +133,6 @@ const DashboardCard = ({
           </Box>
         }
         subheader={subtitle && (
-<<<<<<< HEAD
-          <Typography variant="body2" color="text.secondary">
-=======
           <Typography 
             variant="body2" 
             sx={{
@@ -170,21 +141,12 @@ const DashboardCard = ({
               mt: 0.5,
             }}
           >
->>>>>>> d22fdf744dc57d2094730760d709dab5b02162c1
             {subtitle}
           </Typography>
         )}
         action={headerAction}
         sx={{ 
           pb: 0,
-<<<<<<< HEAD
-          '& .MuiCardHeader-action': { m: 0 }
-        }}
-      />
-      <CardContent sx={{ flexGrow: 1, pt: 2 }}>
-        {children}
-      </CardContent>
-=======
           position: 'relative',
           zIndex: 1,
           '& .MuiCardHeader-action': { m: 0 }
@@ -229,7 +191,6 @@ const DashboardCard = ({
           }
         }}
       />
->>>>>>> d22fdf744dc57d2094730760d709dab5b02162c1
     </Card>
   );
 };

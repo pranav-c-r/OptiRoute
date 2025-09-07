@@ -40,7 +40,7 @@ if not GEMINI_API_KEY:
     raise ValueError("GEMINI_API_KEY environment variable not found. Please set it in your .env file.")
 
 llm = ChatGoogleGenerativeAI(
-    model="gemini-pro", 
+    model="gemini-1.5-flash", 
     temperature=0.3,  # Lower temperature for more deterministic results
     google_api_key=GEMINI_API_KEY
 )

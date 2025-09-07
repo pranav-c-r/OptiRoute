@@ -12,3 +12,5 @@ langchain
 aiohttp
 requests
 huggingface-hub
+gdown
+web3

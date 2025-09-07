@@ -28,7 +28,16 @@ import {
   People as PeopleIcon,
   Warning as WarningIcon,
   Add as AddIcon,
-  Search as SearchIcon
+  Search as SearchIcon,
+  Psychology as PsychologyIcon,
+  Speed as SpeedIcon,
+  LocationOn as LocationIcon,
+  Schedule as ScheduleIcon,
+  Assessment as AssessmentIcon,
+  ToggleOn as ToggleOnIcon,
+  ToggleOff as ToggleOffIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon
 } from '@mui/icons-material';
 
 // Import shared components
@@ -62,6 +71,9 @@ const HospitalResourceOptimizer = () => {
   });
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
+  const [intelligentResults, setIntelligentResults] = useState(null);
+  const [useIntelligentMode, setUseIntelligentMode] = useState(true);
+  const [showReasoning, setShowReasoning] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -106,10 +118,38 @@ const HospitalResourceOptimizer = () => {
   const handlePatientSearch = async () => {
     try {
       setSearching(true);
-      const results = await hospitalAPI.findHospital(patientForm);
-      setSearchResults(results);
+      
+      if (useIntelligentMode) {
+        // Use intelligent search with Gemini LLM
+        const requestData = {
+          patient_info: {
+            patient_lat: patientForm.patient_lat,
+            patient_lon: patientForm.patient_lon,
+            severity: patientForm.severity
+          },
+          ambulance_location: {
+            lat: patientForm.patient_lat, // Use patient location as ambulance location for demo
+            lon: patientForm.patient_lon,
+            ambulance_id: "AMB001",
+            driver_id: "DRV001"
+          },
+          include_live_data: true,
+          max_hospitals: 5,
+          radius_km: 50.0
+        };
+        
+        const results = await hospitalAPI.findHospitalIntelligent(requestData);
+        setIntelligentResults(results);
+        setSearchResults([]); // Clear basic results
+      } else {
+        // Use basic search
+        const results = await hospitalAPI.findHospital(patientForm);
+        setSearchResults(results);
+        setIntelligentResults(null); // Clear intelligent results
+      }
     } catch (error) {
-      handleApiError(error);
+      console.error('Search error:', error);
+      setError(`Search failed: ${error.message}`);
     } finally {
       setSearching(false);
     }
@@ -816,11 +856,34 @@ const HospitalResourceOptimizer = () => {
         </Grid>
       </Container>
 
-      {/* Patient Search Dialog */}
-      <Dialog open={openPatientDialog} onClose={() => setOpenPatientDialog(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Find Hospital for Patient</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
+      {/* Enhanced Patient Search Dialog */}
+      <Dialog open={openPatientDialog} onClose={() => setOpenPatientDialog(false)} maxWidth="lg" fullWidth>
+        <DialogTitle sx={{ 
+          background: 'linear-gradient(45deg, #1976d2, #42a5f5)',
+          color: 'white',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2
+        }}>
+          <PsychologyIcon />
+          AI-Powered Hospital Finder
+        </DialogTitle>
+        <DialogContent sx={{ mt: 2 }}>
+          {/* AI Mode Toggle */}
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, p: 2, bgcolor: 'rgba(25, 118, 210, 0.1)', borderRadius: 2 }}>
+            <PsychologyIcon sx={{ color: 'primary.main', mr: 1 }} />
+            <Typography variant="body1" sx={{ flexGrow: 1 }}>
+              {useIntelligentMode ? 'Intelligent Mode (AI + Live Data + Gemini Analysis)' : 'Basic Mode (ML Model Only)'}
+            </Typography>
+            <IconButton 
+              onClick={() => setUseIntelligentMode(!useIntelligentMode)}
+              sx={{ color: 'primary.main' }}
+            >
+              {useIntelligentMode ? <ToggleOnIcon fontSize="large" /> : <ToggleOffIcon fontSize="large" />}
+            </IconButton>
+          </Box>
+
+          <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
@@ -830,6 +893,9 @@ const HospitalResourceOptimizer = () => {
                 onChange={(e) => setPatientForm(prev => ({ ...prev, patient_lat: parseFloat(e.target.value) }))}
                 helperText="Enter patient's latitude coordinate"
                 error={patientForm.patient_lat === 0 || isNaN(patientForm.patient_lat)}
+                InputProps={{
+                  startAdornment: <LocationIcon sx={{ color: 'primary.main', mr: 1 }} />
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -841,6 +907,9 @@ const HospitalResourceOptimizer = () => {
                 onChange={(e) => setPatientForm(prev => ({ ...prev, patient_lon: parseFloat(e.target.value) }))}
                 helperText="Enter patient's longitude coordinate"
                 error={patientForm.patient_lon === 0 || isNaN(patientForm.patient_lon)}
+                InputProps={{
+                  startAdornment: <LocationIcon sx={{ color: 'primary.main', mr: 1 }} />
+                }}
               />
             </Grid>
             <Grid item xs={12}>
@@ -853,18 +922,243 @@ const HospitalResourceOptimizer = () => {
                 helperText="1-5 scale (1=low, 5=critical)"
                 inputProps={{ min: 1, max: 5 }}
                 error={patientForm.severity < 1 || patientForm.severity > 5}
+                InputProps={{
+                  startAdornment: <AssessmentIcon sx={{ color: 'primary.main', mr: 1 }} />
+                }}
               />
             </Grid>
           </Grid>
+
           {/* Show error if location is not set */}
           {(!isPatientFormValid && error) && (
             <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>
           )}
-          {/* Search Results */}
-          {searchResults.length > 0 && (
+
+          {/* Intelligent Search Results */}
+          {intelligentResults && (
+            <Box sx={{ mt: 3 }}>
+              <Paper sx={{ p: 3, bgcolor: 'rgba(25, 118, 210, 0.05)', border: '2px solid rgba(25, 118, 210, 0.2)' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <PsychologyIcon sx={{ color: 'primary.main', mr: 1 }} />
+                  <Typography variant="h6" sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+                    AI-Enhanced Hospital Rankings
+                  </Typography>
+                  <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                      Analyzed by {intelligentResults.model_used}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                {/* Overall Assessment */}
+                <Alert severity="info" sx={{ mb: 3 }}>
+                  <Typography variant="body2">
+                    <strong>AI Assessment:</strong> {intelligentResults.overall_assessment}
+                  </Typography>
+                </Alert>
+
+                {/* Critical Factors */}
+                {intelligentResults.critical_factors && intelligentResults.critical_factors.length > 0 && (
+                  <Box sx={{ mb: 3 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1 }}>
+                      Critical Decision Factors:
+                    </Typography>
+                    {intelligentResults.critical_factors.map((factor, index) => (
+                      <Typography key={index} variant="body2" sx={{ mb: 0.5, pl: 2 }}>
+                        • {factor}
+                      </Typography>
+                    ))}
+                  </Box>
+                )}
+
+                {/* Hospital Rankings */}
+                {intelligentResults.final_ranking && intelligentResults.final_ranking.map((hospital, index) => {
+                  const getRiskColor = (riskLevel) => {
+                    switch (riskLevel?.toLowerCase()) {
+                      case 'low': return '#4caf50';
+                      case 'medium': return '#ff9800';
+                      case 'high': return '#f44336';
+                      default: return '#ff9800';
+                    }
+                  };
+
+                  return (
+                    <Paper key={index} sx={{ 
+                      p: 3, 
+                      mb: 2, 
+                      border: hospital.rank === 1 ? '3px solid #4caf50' : '1px solid #e0e0e0',
+                      bgcolor: hospital.rank === 1 ? 'rgba(76, 175, 80, 0.05)' : 'background.paper',
+                      position: 'relative'
+                    }}>
+                      {/* Rank Badge */}
+                      <Box sx={{
+                        position: 'absolute',
+                        top: -10,
+                        left: 20,
+                        bgcolor: hospital.rank === 1 ? '#4caf50' : '#1976d2',
+                        color: 'white',
+                        px: 2,
+                        py: 0.5,
+                        borderRadius: '12px',
+                        fontSize: '0.8rem',
+                        fontWeight: 'bold'
+                      }}>
+                        #{hospital.rank} {hospital.rank === 1 ? 'RECOMMENDED' : 'ALTERNATIVE'}
+                      </Box>
+
+                      <Grid container spacing={3} sx={{ mt: 1 }}>
+                        {/* Hospital Info */}
+                        <Grid item xs={12} md={6}>
+                          <Typography variant="h6" sx={{ 
+                            color: 'primary.main', 
+                            fontWeight: 'bold',
+                            mb: 1
+                          }}>
+                            {hospital.hospital_name}
+                          </Typography>
+                          
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                              <LocationIcon sx={{ color: 'primary.main', fontSize: 16, mr: 0.5 }} />
+                              <Typography variant="body2">
+                                {hospital.distance_km} km away
+                              </Typography>
+                            </Box>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                              <ScheduleIcon sx={{ color: 'primary.main', fontSize: 16, mr: 0.5 }} />
+                              <Typography variant="body2">
+                                ~{hospital.estimated_wait_time_minutes} min wait
+                              </Typography>
+                            </Box>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                              <SpeedIcon sx={{ color: getRiskColor(hospital.risk_level), fontSize: 16, mr: 0.5 }} />
+                              <Typography variant="body2" sx={{ color: getRiskColor(hospital.risk_level) }}>
+                                {hospital.risk_level} Risk
+                              </Typography>
+                            </Box>
+                          </Box>
+
+                          {/* Status Indicators */}
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                            <Alert 
+                              severity={hospital.bed_availability_status === 'Available' ? 'success' : hospital.bed_availability_status === 'Limited' ? 'warning' : 'error'}
+                              sx={{ py: 0, fontSize: '0.7rem' }}
+                            >
+                              Beds: {hospital.bed_availability_status}
+                            </Alert>
+                            <Alert 
+                              severity={hospital.icu_availability === 'Available' ? 'success' : 'warning'}
+                              sx={{ py: 0, fontSize: '0.7rem' }}
+                            >
+                              ICU: {hospital.icu_availability}
+                            </Alert>
+                            <Alert 
+                              severity={hospital.specialist_match === 'Perfect' ? 'success' : hospital.specialist_match === 'Good' ? 'info' : 'warning'}
+                              sx={{ py: 0, fontSize: '0.7rem' }}
+                            >
+                              Specialist: {hospital.specialist_match}
+                            </Alert>
+                          </Box>
+                        </Grid>
+
+                        {/* Scores and Reasoning */}
+                        <Grid item xs={12} md={6}>
+                          <Box sx={{ mb: 2 }}>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                              AI Analysis Scores:
+                            </Typography>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                              <Typography variant="body2">ML Suitability:</Typography>
+                              <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                                {(hospital.ml_suitability_score * 100).toFixed(1)}%
+                              </Typography>
+                            </Box>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                              <Typography variant="body2">Live Data Score:</Typography>
+                              <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                                {(hospital.real_time_score * 100).toFixed(1)}%
+                              </Typography>
+                            </Box>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                              <Typography variant="body2" sx={{ fontWeight: 'bold' }}>Final AI Score:</Typography>
+                              <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                                {(hospital.final_score * 100).toFixed(1)}%
+                              </Typography>
+                            </Box>
+                          </Box>
+
+                          {/* Reasoning */}
+                          <Box>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                              AI Reasoning:
+                            </Typography>
+                            <Typography variant="body2" sx={{ 
+                              fontSize: '0.85rem', 
+                              lineHeight: 1.4,
+                              maxHeight: showReasoning ? 'none' : '3em',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis'
+                            }}>
+                              {hospital.reasoning}
+                            </Typography>
+                          </Box>
+                        </Grid>
+                      </Grid>
+                    </Paper>
+                  );
+                })}
+
+                {/* Recommendations */}
+                {intelligentResults.recommendations && (
+                  <Box sx={{ mt: 3 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2 }}>
+                      AI Recommendations:
+                    </Typography>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} md={6}>
+                        <Alert severity="success">
+                          <Typography variant="body2">
+                            <strong>Primary Choice:</strong><br />
+                            {intelligentResults.recommendations.primary_choice}
+                          </Typography>
+                        </Alert>
+                      </Grid>
+                      <Grid item xs={12} md={6}>
+                        <Alert severity="info">
+                          <Typography variant="body2">
+                            <strong>Backup Plan:</strong><br />
+                            {intelligentResults.recommendations.backup_plan}
+                          </Typography>
+                        </Alert>
+                      </Grid>
+                      <Grid item xs={12} md={6}>
+                        <Alert severity="warning">
+                          <Typography variant="body2">
+                            <strong>Transport Notes:</strong><br />
+                            {intelligentResults.recommendations.transport_notes}
+                          </Typography>
+                        </Alert>
+                      </Grid>
+                      <Grid item xs={12} md={6}>
+                        <Alert severity="info">
+                          <Typography variant="body2">
+                            <strong>Hospital Preparation:</strong><br />
+                            {intelligentResults.recommendations.hospital_prep}
+                          </Typography>
+                        </Alert>
+                      </Grid>
+                    </Grid>
+                  </Box>
+                )}
+              </Paper>
+            </Box>
+          )}
+
+          {/* Basic Search Results */}
+          {searchResults.length > 0 && !intelligentResults && (
             <Box sx={{ mt: 3 }}>
               <Typography variant="h6" sx={{ mb: 2, color: 'primary.main' }}>
-                Recommended Hospitals:
+                Basic ML Recommendations:
               </Typography>
               {searchResults.map((hospital, index) => (
                 <Paper key={index} sx={{ p: 2, mb: 2, border: '1px solid #e0e0e0' }}>
@@ -884,15 +1178,27 @@ const HospitalResourceOptimizer = () => {
             </Box>
           )}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenPatientDialog(false)}>Cancel</Button>
+        <DialogActions sx={{ p: 3, bgcolor: 'rgba(25, 118, 210, 0.05)' }}>
+          <Button onClick={() => {
+            setOpenPatientDialog(false);
+            setSearchResults([]);
+            setIntelligentResults(null);
+          }}>
+            Close
+          </Button>
           <Button 
             onClick={handlePatientSearch} 
             variant="contained"
             disabled={searching || !isPatientFormValid}
-            startIcon={searching ? <CircularProgress size={20} /> : <SearchIcon />}
+            startIcon={searching ? <CircularProgress size={20} /> : (useIntelligentMode ? <PsychologyIcon /> : <SearchIcon />)}
+            sx={{
+              background: useIntelligentMode ? 'linear-gradient(45deg, #4caf50, #66bb6a)' : 'linear-gradient(45deg, #1976d2, #42a5f5)',
+              '&:hover': {
+                background: useIntelligentMode ? 'linear-gradient(45deg, #388e3c, #4caf50)' : 'linear-gradient(45deg, #1565c0, #1976d2)'
+              }
+            }}
           >
-            {searching ? 'Searching...' : 'Find Hospital'}
+            {searching ? 'Analyzing...' : (useIntelligentMode ? 'AI Analysis' : 'Find Hospital')}
           </Button>
         </DialogActions>
       </Dialog>

@@ -112,6 +112,19 @@ export const hospitalAPI = {
     return response.json();
   },
 
+  // Intelligent Hospital Finding with Gemini LLM
+  findHospitalIntelligent: async (requestData) => {
+    const response = await fetch(`${API_BASE_URL}/hospital/find_hospital_intelligent`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestData)
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  },
+
   // Dashboard Analytics
   getDashboardStats: async () => {
     const response = await fetch(`${API_BASE_URL}/hospital/dashboard/stats`);

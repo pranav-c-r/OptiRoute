@@ -3,17 +3,18 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from hospital_allocation.routes import router as hospital_router
 from shelter_allocation.routes import router as shelter_router
-# Dynamically import waste-optimizer.routes as waste_optimizer_router
-import sys
-import importlib.util
-import os
-waste_optimizer_path = os.path.join(os.path.dirname(__file__), 'waste-optimizer')
-if waste_optimizer_path not in sys.path:
-    sys.path.insert(0, waste_optimizer_path)
-spec = importlib.util.spec_from_file_location("waste_optimizer.routes", os.path.join(waste_optimizer_path, "routes.py"))
-module = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(module)
-waste_optimizer_router = module.router
+# Temporarily disabled waste optimizer to focus on shelter allocation
+# # Dynamically import waste-optimizer.routes as waste_optimizer_router
+# import sys
+# import importlib.util
+# import os
+# waste_optimizer_path = os.path.join(os.path.dirname(__file__), 'waste-optimizer')
+# if waste_optimizer_path not in sys.path:
+#     sys.path.insert(0, waste_optimizer_path)
+# spec = importlib.util.spec_from_file_location("waste_optimizer.routes", os.path.join(waste_optimizer_path, "routes.py"))
+# module = importlib.util.module_from_spec(spec)
+# spec.loader.exec_module(module)
+# waste_optimizer_router = module.router
 
 # Create the main FastAPI application instance
 app = FastAPI(
@@ -34,8 +35,9 @@ app.add_middleware(
 # Include the hospital allocation router with a clear prefix
 app.include_router(hospital_router, prefix="/hospital", tags=["HospitalAllocation"])
 
-# Include the new waste optimizer router
-app.include_router(waste_optimizer_router, prefix="/waste-optimizer", tags=["WasteOptimizer"])
+# Temporarily disabled waste optimizer
+# # Include the new waste optimizer router
+# app.include_router(waste_optimizer_router, prefix="/waste-optimizer", tags=["WasteOptimizer"])
 
 app.include_router(shelter_router, prefix="/shelter", tags=["ShelterAllocation"])
 

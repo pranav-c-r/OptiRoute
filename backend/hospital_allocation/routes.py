@@ -10,6 +10,7 @@ from huggingface_hub import hf_hub_download
 from typing import List, Dict, Any
 from datetime import datetime, timedelta
 from enum import Enum
+from .gemini_service import gemini_service
 
 # Create an API Router for this module
 router = APIRouter()
@@ -148,6 +149,43 @@ class UserProfileUpdate(BaseModel):
     role: str
     profile_data: Dict[str, Any]
 
+# Enhanced models for intelligent ranking
+class AmbulanceLocationInput(BaseModel):
+    lat: float
+    lon: float
+    ambulance_id: str = "AMB001"
+    driver_id: str = ""
+
+class IntelligentHospitalRankingInput(BaseModel):
+    patient_info: PatientInput
+    ambulance_location: AmbulanceLocationInput
+    include_live_data: bool = True
+    max_hospitals: int = 5
+    radius_km: float = 50.0
+
+class HospitalRankingResponse(BaseModel):
+    rank: int
+    hospital_name: str
+    hospital_id: str
+    distance_km: float
+    ml_suitability_score: float
+    real_time_score: float
+    final_score: float
+    reasoning: str
+    estimated_wait_time_minutes: int
+    bed_availability_status: str
+    icu_availability: str
+    specialist_match: str
+    risk_level: str
+
+class IntelligentRankingResponse(BaseModel):
+    final_ranking: List[HospitalRankingResponse]
+    critical_factors: List[str]
+    recommendations: Dict[str, str]
+    overall_assessment: str
+    analysis_timestamp: str
+    model_used: str
+
 # --- Load all necessary data and models from your Model Hub repository ---
 # This will run only once when the server starts
 gbm = None
@@ -252,6 +290,151 @@ def find_hospital(patient: PatientInput):
         })
     
     return output
+
+# --- Enhanced Intelligent Hospital Ranking Endpoint ---
+@router.post("/find_hospital_intelligent", response_model=IntelligentRankingResponse)
+async def find_hospital_intelligent(request: IntelligentHospitalRankingInput):
+    """Find hospitals using ML model + live data + Gemini LLM analysis"""
+    try:
+        if gbm is None or clf is None or infra is None:
+            raise HTTPException(status_code=500, detail="Models or data not loaded")
+        
+        patient = request.patient_info
+        ambulance_location = request.ambulance_location
+        
+        # Step 1: Get ML model rankings (same as find_hospital)
+        req_icu = True if patient.severity >= 4 else False
+        
+        # Simulating real-time data for the prediction logic
+        latest_rows_data = infra.copy()
+        latest_rows_data['occupied'] = np.random.randint(10, 80, size=len(latest_rows_data))
+        
+        X_live = pd.DataFrame({
+            'occ_lag1': latest_rows_data['occupied'],
+            'occ_lag7': latest_rows_data['occupied'].shift(7).fillna(latest_rows_data['occupied'] * 0.95),
+            'occ_roll7': latest_rows_data['occupied'].rolling(window=7, min_periods=1).mean().shift(1).fillna(0),
+            'adm_roll7': np.random.uniform(0, 10, size=len(infra)),
+            'adm_lag1': np.random.uniform(0, 10, size=len(infra)),
+            'dis_lag1': np.random.uniform(0, 10, size=len(infra)),
+            'dow': pd.to_datetime('today').dayofweek,
+            'total_beds': infra['total_beds']
+        })
+        
+        features = ['occ_lag1','occ_lag7','occ_roll7','adm_roll7','adm_lag1','dis_lag1','dow','total_beds']
+        X_live = X_live[features].fillna(0)
+        
+        pred_next_occ = gbm.predict(X_live)
+        latest_rows_data['pred_next_occupied'] = pred_next_occ
+        latest_rows_data['pred_beds_available'] = latest_rows_data['total_beds'] - latest_rows_data['pred_next_occupied']
+        latest_rows_data['staffed_rate'] = np.random.uniform(0.8,1.2,size=len(latest_rows_data))
+        latest_rows_data['wait_time_est'] = latest_rows_data['pred_next_occupied'] / (latest_rows_data['total_beds'] * latest_rows_data['staffed_rate'] + 1e-6)
+        
+        rows = []
+        for idx, h in latest_rows_data.iterrows():
+            dist = haversine(patient.patient_lon, patient.patient_lat, h['longitude'], h['latitude'])
+            
+            # Filter by radius if specified
+            if request.radius_km > 0 and dist > request.radius_km:
+                continue
+                
+            suit_features_dict = {
+                "dist_km": dist,
+                "pred_beds_available": max(0, h['pred_beds_available']),
+                "wait_time_est": h['wait_time_est'],
+                "severity": patient.severity,
+                "req_icu": int(req_icu),
+                "hospital_total_beds": h['total_beds'],
+                "hospital_icu_beds": h['icu_beds']
+            }
+            rows.append(suit_features_dict)
+
+        candidates_df = pd.DataFrame(rows)
+        
+        if candidates_df.empty:
+            raise HTTPException(status_code=404, detail="No hospitals found within specified radius")
+        
+        suit_features = ['dist_km','pred_beds_available','wait_time_est','severity','req_icu','hospital_total_beds','hospital_icu_beds']
+        candidates_df['ml_prob'] = clf.predict(candidates_df[suit_features])
+        
+        ranked_hospitals = candidates_df.sort_values('ml_prob', ascending=False).head(request.max_hospitals)
+        
+        # Step 2: Format ML rankings for LLM
+        ml_rankings = []
+        for _, row in ranked_hospitals.iterrows():
+            hospital_info = infra.loc[row.name]
+            ml_rankings.append({
+                "hospital_name": hospital_info['facility_name'],
+                "hospital_id": str(row.name),
+                "distance_km": round(row['dist_km'], 2),
+                "predicted_beds_available": int(max(0, round(row['pred_beds_available']))),
+                "suitability_score": round(row['ml_prob'], 3),
+                "hospital_latitude": hospital_info['latitude'],
+                "hospital_longitude": hospital_info['longitude'],
+                "total_beds": int(hospital_info['total_beds']),
+                "icu_beds": int(hospital_info['icu_beds']),
+                "wait_time_estimate": round(row['wait_time_est'], 2)
+            })
+        
+        # Step 3: Gather live hospital data if requested
+        live_hospital_data = {
+            "hospitals": list(hospitals_db.values()) if request.include_live_data else [],
+            "doctors": list(doctors_db.values()) if request.include_live_data else [],
+            "patients": list(patients_db.values()) if request.include_live_data else []
+        }
+        
+        # Step 4: Prepare ambulance location and patient info for LLM
+        ambulance_location_dict = {
+            "lat": ambulance_location.lat,
+            "lon": ambulance_location.lon
+        }
+        
+        patient_info_dict = {
+            "patient_lat": patient.patient_lat,
+            "patient_lon": patient.patient_lon,
+            "severity": patient.severity
+        }
+        
+        # Step 5: Get intelligent ranking from Gemini LLM
+        llm_result = await gemini_service.get_intelligent_hospital_ranking(
+            ml_rankings=ml_rankings,
+            live_hospital_data=live_hospital_data,
+            ambulance_location=ambulance_location_dict,
+            patient_info=patient_info_dict
+        )
+        
+        # Step 6: Format response according to Pydantic model
+        formatted_rankings = []
+        for hospital_ranking in llm_result.get('final_ranking', []):
+            formatted_rankings.append(HospitalRankingResponse(
+                rank=hospital_ranking.get('rank', 0),
+                hospital_name=hospital_ranking.get('hospital_name', 'Unknown Hospital'),
+                hospital_id=hospital_ranking.get('hospital_id', 'unknown'),
+                distance_km=hospital_ranking.get('distance_km', 0.0),
+                ml_suitability_score=hospital_ranking.get('ml_suitability_score', 0.0),
+                real_time_score=hospital_ranking.get('real_time_score', 0.0),
+                final_score=hospital_ranking.get('final_score', 0.0),
+                reasoning=hospital_ranking.get('reasoning', 'No reasoning provided'),
+                estimated_wait_time_minutes=hospital_ranking.get('estimated_wait_time_minutes', 0),
+                bed_availability_status=hospital_ranking.get('bed_availability_status', 'Unknown'),
+                icu_availability=hospital_ranking.get('icu_availability', 'Unknown'),
+                specialist_match=hospital_ranking.get('specialist_match', 'Unknown'),
+                risk_level=hospital_ranking.get('risk_level', 'Medium')
+            ))
+        
+        return IntelligentRankingResponse(
+            final_ranking=formatted_rankings,
+            critical_factors=llm_result.get('critical_factors', []),
+            recommendations=llm_result.get('recommendations', {}),
+            overall_assessment=llm_result.get('overall_assessment', 'Analysis completed'),
+            analysis_timestamp=llm_result.get('analysis_timestamp', datetime.now().isoformat()),
+            model_used=llm_result.get('model_used', 'gemini-pro')
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error in intelligent hospital ranking: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 # --- In-memory storage for demo purposes (in production, use a database) ---
 hospitals_db = {}

@@ -24,6 +24,7 @@ import SmartShelterAllocation from './pages/SmartShelterAllocation';
 // Import role-specific components
 import DoctorDashboard from './components/role/DoctorDashboard';
 import HospitalAdminDashboard from './components/role/HospitalAdminDashboard';
+import DemandForecasting from './components/DemandForecasting';
 
 function App() {
   return (
@@ -98,6 +99,14 @@ function App() {
               <ProtectedRoute allowedRoles={["hospital_admin"]}>
                 <Layout>
                   <HospitalAdminDashboard />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/demand-forecasting" element={
+              <ProtectedRoute>
+                <Layout>
+                  <DemandForecasting />
                 </Layout>
               </ProtectedRoute>
             } />
